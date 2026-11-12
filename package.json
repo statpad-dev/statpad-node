@@ -1,0 +1,48 @@
+{
+  "name": "@statpad/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript client for the Statpad live sports data API.",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://statpad.dev/docs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/statpad-dev/statpad-node.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "openapi-ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "check:pack": "npm pack --dry-run --json | node scripts/check-pack.mjs",
+    "check:live": "npm run build && node scripts/live-check.mjs",
+    "prepack": "npm run build",
+    "check": "npm run generate && node scripts/check-generated.mjs && npm run typecheck && npm test && npm run build && npm run check:pack"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "bugs": {
+    "url": "https://github.com/statpad-dev/statpad-node/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
