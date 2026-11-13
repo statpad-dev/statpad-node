@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 
 const allowed = /^(dist\/.+|README\.md|LICENSE|package\.json)$/;
 
-const [pack] = JSON.parse(readFileSync(0, 'utf8'));
+const output = JSON.parse(readFileSync(0, 'utf8'));
+const [pack] = Array.isArray(output) ? output : Object.values(output);
 const files = pack.files.map((file) => file.path).sort();
 const unexpected = files.filter((path) => !allowed.test(path));
 
