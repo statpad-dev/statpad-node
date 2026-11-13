@@ -30,14 +30,18 @@
     "build": "tsc -p tsconfig.build.json",
     "check:pack": "npm pack --dry-run --json | node scripts/check-pack.mjs",
     "check:live": "npm run build && node scripts/live-check.mjs",
+    "test:live": "vitest run --config test/live/vitest.config.ts",
     "prepack": "npm run build",
     "check": "npm run generate && node scripts/check-generated.mjs && npm run typecheck && npm test && npm run build && npm run check:pack"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
     "@types/node": "^24.19.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "typescript": "~6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "yaml": "^2.9.1"
   },
   "bugs": {
     "url": "https://github.com/statpad-dev/statpad-node/issues"

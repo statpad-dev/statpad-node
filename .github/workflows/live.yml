@@ -1,0 +1,31 @@
+name: Live
+
+on:
+  schedule:
+    - cron: '23 11 * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    environment: live
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run the SDK against production with a real key
+        run: npm run test:live
+        env:
+          STATPAD_API_KEY: ${{ secrets.STATPAD_API_KEY }}
