@@ -21,6 +21,8 @@ npm run check
 
 `npm run check:live` builds the package and calls the production API without a key. It passes when the API answers 401 `unauthorized`. CI doesn't run it.
 
+`npm run test:live` calls the production API with a real key from `STATPAD_API_KEY`. For each league the key can read, it lists teams, reads one team, finds the last finished game in the past 14 days, reads it, sends its `ETag` back and expects a 304, reads its box score, follows one cursor through its plays and checks that an unknown game gets 404. It checks each response body against the schema in `openapi.yaml`, so it fails when the API drifts from the spec this client was generated from. It makes about 30 requests. The Live workflow runs it every day, on every push to `main` and on demand, with the key stored as the `STATPAD_API_KEY` secret in the repository's `live` environment.
+
 ## Spec updates
 
 When the API's spec changes, a pull request named "Sync the OpenAPI spec" appears here. It updates `openapi.yaml` and `src/generated` together. If its CI fails, the change broke `src/index.ts` or its tests. Fix that in a separate pull request, because each sync rewrites the sync branch.
