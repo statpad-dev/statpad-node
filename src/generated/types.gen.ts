@@ -315,7 +315,13 @@ export type Game = {
     home_score: number | null;
     away_score: number | null;
     attendance: number | null;
+    /**
+     * When the first play happened, from the play-by-play's own wall clock, counting only plays that carry one. Null until such a play arrives.
+     */
     started_at: string | null;
+    /**
+     * When the last play happened, from the play-by-play's own wall clock, counting only plays that carry one, once the game is over. Null until then, or when no play carries one.
+     */
     ended_at: string | null;
     /**
      * For a makeup game, the postponed game it replaces, when known.
@@ -345,10 +351,16 @@ export type LiveState = {
     period: number | null;
     period_half: PeriodHalf | null;
     clock_seconds: number | null;
-    clock_running: boolean;
+    /**
+     * Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football and basketball feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post.
+     */
+    clock_running: boolean | null;
     possession_team_id: string | null;
     home_score: number;
     away_score: number;
+    /**
+     * The game's newest play by sequence, of any type, so a timeout or the end of a period counts. Null before the first play.
+     */
     last_play_id: string | null;
     football: FootballSituation | null;
     soccer: SoccerSituation | null;
@@ -369,8 +381,14 @@ export type FootballSituation = {
      * Line of scrimmage, 0-100 from the possessing team's own goal line.
      */
     yardline: number | null;
-    home_timeouts: number;
-    away_timeouts: number;
+    /**
+     * Timeouts the home team has left in the half, or null when the feed doesn't report them, as after the final.
+     */
+    home_timeouts: number | null;
+    /**
+     * Timeouts the away team has left in the half, or null when the feed doesn't report them, as after the final.
+     */
+    away_timeouts: number | null;
 };
 
 /**
