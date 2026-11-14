@@ -554,7 +554,7 @@ export class LeagueNews extends HeyApiClient {
     /**
      * List current injuries
      *
-     * Open injuries, each with its latest report.
+     * Open injuries, each with its latest report. Filled for the NFL; other leagues answer an empty list.
      */
     public listInjuries<ThrowOnError extends boolean = true>(options: Options<ListInjuriesData, ThrowOnError>): RequestResult<ListInjuriesResponses, ListInjuriesErrors, ThrowOnError> {
         return (options.client ?? this.client).get<ListInjuriesResponses, ListInjuriesErrors, ThrowOnError>({
