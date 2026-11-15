@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createServer } from 'node:http';
+import type { AddressInfo, Socket } from 'node:net';
+
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { type Game, paginate, Statpad, StatpadError } from '../src/index.js';
 
@@ -147,6 +150,29 @@ describe('Statpad', () => {
     expect(response.status).toBe(304);
     expect(requestAt(fetch, 0).headers.get('If-None-Match')).toBe('"v1"');
   });
+
+  it('aborts on a timeout signal after a garbage collection when the server never answers', { timeout: 10_000 }, async () => {
+    const gc = globalThis.gc;
+    expect(gc, 'run vitest with --expose-gc').toBeTypeOf('function');
+    const sockets = new Set<Socket>();
+    const server = createServer(() => {});
+    server.on('connection', (socket) => sockets.add(socket));
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const collecting = setInterval(() => gc?.(), 20);
+    onTestFinished(() => {
+      clearInterval(collecting);
+      for (const socket of sockets) socket.destroy();
+      server.close();
+    });
+    const { port } = server.address() as AddressInfo;
+    const statpad = new Statpad({ apiKey: 'sk_test', baseUrl: `http://127.0.0.1:${port}` });
+
+    const started = performance.now();
+    const error = await statpad.leagues.listLeagues({ signal: AbortSignal.timeout(500) }).catch((error: unknown) => error);
+
+    expect(error).toMatchObject({ name: 'TimeoutError' });
+    expect(performance.now() - started).toBeLessThan(3_000);
+  });
 });
 
 describe('StatpadError', () => {
@@ -200,6 +226,24 @@ describe('StatpadError', () => {
       title: 'Bad Gateway',
       message: '502: Bad Gateway',
     });
+  });
+
+  it.each([
+    { contentType: 'text/html', expected: 'Content-Type text/html' },
+    { contentType: 'application/json', expected: 'Content-Type application/json' },
+    { contentType: undefined, expected: 'no Content-Type' },
+  ])('throws for a 200 whose body is not JSON, with $expected', async ({ contentType, expected }) => {
+    const body = '<!DOCTYPE html><html>Sign in to the Wi-Fi</html>';
+    const response = new Response(body, { status: 200 });
+    if (contentType) response.headers.set('Content-Type', contentType);
+    else response.headers.delete('Content-Type');
+    const statpad = new Statpad({ apiKey: 'sk_test', fetch: mockFetch(response) });
+
+    const error = await statpad.leagues.listLeagues().catch((error: unknown) => error);
+
+    expect(error).toBeInstanceOf(StatpadError);
+    expect(error).toMatchObject({ status: 200, code: undefined, title: 'Response body is not JSON' });
+    expect((error as StatpadError).message).toContain(`got ${expected}`);
   });
 });
 
