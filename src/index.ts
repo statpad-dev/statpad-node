@@ -31,7 +31,7 @@ export interface StatpadOptions {
   maxRetries?: number;
 }
 
-/** A non-2xx, non-304 response, from its RFC 9457 problem body. */
+/** A non-2xx, non-304 response, from its RFC 9457 problem body, or a 2xx response whose body isn't JSON. */
 export class StatpadError extends Error {
   override readonly name = 'StatpadError';
   readonly status: number;
@@ -94,11 +94,21 @@ export class Statpad {
         auth: apiKey,
         baseUrl,
         fetch: retrying(fetchImpl ?? ((input, init) => globalThis.fetch(input, init)), maxRetries),
+        parseAs: 'json',
         throwOnError: true,
       }),
     );
     base.interceptors.error.use((error, response, request) => {
-      if (!response || response.ok) return error;
+      if (!response) return error;
+      if (response.ok) {
+        if (!(error instanceof SyntaxError)) return error;
+        const contentType = response.headers.get('Content-Type');
+        const got = contentType ? `Content-Type ${contentType}` : 'no Content-Type';
+        return new StatpadError(response, {
+          title: 'Response body is not JSON',
+          detail: `Expected a JSON body, got ${got}. A proxy or captive portal may have answered instead of the API.`,
+        });
+      }
       if (response.status === 304 && request) return new NotModified(request, response);
       return new StatpadError(response, error);
     });
@@ -177,7 +187,7 @@ function retrying(fetchImpl: typeof fetch, maxRetries: number): typeof fetch {
     for (let attempt = 0; ; attempt++) {
       let response: Response;
       try {
-        response = await fetchImpl(request.clone());
+        response = await fetchImpl(request.clone(), { signal: request.signal });
       } catch (error) {
         if (attempt >= maxRetries || request.signal.aborted) throw error;
         await sleep(backoffMs(attempt), request.signal);

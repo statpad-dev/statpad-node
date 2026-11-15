@@ -11,6 +11,8 @@ The TypeScript client for [Statpad](https://statpad.dev), a live sports data API
 npm install @statpad/sdk
 ```
 
+The package is ESM only. Load it with `import`, or with `await import('@statpad/sdk')` from CommonJS. `require('@statpad/sdk')` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`.
+
 The SDK needs Node.js 20 or later. It has no dependencies and uses only the standard `fetch` API, so Bun, Deno and Cloudflare Workers should run it too, but CI tests only Node.
 
 Call Statpad from your server. The API doesn't allow requests from browsers, and a key shipped in a web page or mobile app is readable by anyone who opens it.
@@ -80,7 +82,11 @@ for await (const page of paginate(statpad.playByPlay.listPlays, { path: { league
 
 ## Errors
 
-Every failed request throws a `StatpadError`. Branch on its `code`, which stays stable. The `title` and `detail` fields are for people and can change.
+A request that gets an error response from the API throws a `StatpadError`. Branch on its `code`, which stays stable. The `title` and `detail` fields are for people and can change.
+
+A 2xx response whose body isn't JSON also throws a `StatpadError`, with that 2xx `status` and no `code`. This happens when something other than the API answers, such as a captive portal or a proxy's sign-in page.
+
+Two failures happen before there is a response, so they don't throw a `StatpadError`. A network error, such as a refused connection or a failed DNS lookup, throws the `TypeError` from `fetch` once the retries run out. In Node its message is `fetch failed` and the underlying error is in `cause`. An aborted request throws the signal's reason, which is a `DOMException` named `TimeoutError` for `AbortSignal.timeout()` and `AbortError` for `AbortController.abort()`.
 
 ```ts
 import { StatpadError } from '@statpad/sdk';
@@ -121,6 +127,8 @@ await statpad.games.getGame({
   signal: AbortSignal.timeout(10_000),
 });
 ```
+
+The signal covers every attempt and the waits between retries. When it fires, the call throws the signal's reason, here a `DOMException` named `TimeoutError`, not a `StatpadError`. A network error that outlasts the retries throws the `TypeError` from `fetch`.
 
 ## Following a live game
 
