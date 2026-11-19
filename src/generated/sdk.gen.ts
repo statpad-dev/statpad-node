@@ -279,11 +279,10 @@ export class Games extends HeyApiClient {
     /**
      * List games
      *
-     * A schedule page, ordered by start time. Pass either `date`, a schedule day, or a
-     * `from`-`to` range of start times up to 31 days long. Games are listed once the league
-     * publishes them with both teams known, up to the end of its season, and a game the league
-     * withdraws before it starts is removed. A range matches `time_tbd` games by their
-     * `scheduled_at`, the start of their US Eastern day.
+     * A schedule page, ordered by start time. Pass either `date` or both `from` and `to`.
+     *
+     * A game appears once the league publishes it with both teams known, through the end of its
+     * season. A game the league withdraws before it starts disappears from the list.
      *
      */
     public listGames<ThrowOnError extends boolean = true>(options: Options<ListGamesData, ThrowOnError>): RequestResult<ListGamesResponses, ListGamesErrors, ThrowOnError> {
@@ -392,7 +391,8 @@ export class Statistics extends HeyApiClient {
      * List season leaders for a stat
      *
      * Players ranked by one stat of their season totals across teams. Ties are broken by player
-     * id, so pages are stable.
+     * id, so pages are stable. An unknown `category` or `stat` returns an empty list, and a
+     * season Statpad doesn't hold returns 404.
      *
      */
     public listLeaders<ThrowOnError extends boolean = true>(options: Options<ListLeadersData, ThrowOnError>): RequestResult<ListLeadersResponses, ListLeadersErrors, ThrowOnError> {
@@ -418,10 +418,13 @@ export class Changes extends HeyApiClient {
     /**
      * Read a game's change stream
      *
-     * The same changes the WebSocket stream `game:<id>` carries, after a seq, oldest first.
-     * Poll it with the last seq you applied. A game's stream stays readable for at least 7 days
-     * after the game ends; after that, or when `after_seq` is older than what is retained,
-     * it returns 410 with code `resync_required`, and the client fetches the game again.
+     * Up to `limit` of the changes the stream `game:<id>` carries after `after_seq`, oldest first.
+     * Poll it with the last seq you applied. Changes stay readable for at least 7 days after the
+     * game ends.
+     *
+     * - An `after_seq` older than `min_seq` - 1 returns 410 `resync_required`. Read the game and
+     * continue from its `seq`.
+     * - An `after_seq` past `head_seq` returns 400 `bad_request`.
      *
      */
     public listGameChanges<ThrowOnError extends boolean = true>(options: Options<ListGameChangesData, ThrowOnError>): RequestResult<ListGameChangesResponses, ListGameChangesErrors, ThrowOnError> {
@@ -436,9 +439,11 @@ export class Changes extends HeyApiClient {
      * List entities changed in a time window
      *
      * Which entities of a league changed in [`from`, `window_end`), each once per game with its
-     * latest version, for clients that refetch rather than stream. A window ends no later than 60
-     * seconds ago and spans at most 24 hours, so a change is never missed: poll again with
-     * `from=window_end`. For lower latency, follow a stream's seq instead.
+     * latest version, for clients that refetch rather than stream.
+     *
+     * The window ends at `to`, but never more than 24 hours after `from` and never later than 60
+     * seconds ago. Page with `cursor` and the same `from`. Once `next_cursor` is null, poll the
+     * next window with `from=window_end`.
      *
      */
     public listChangedEntities<ThrowOnError extends boolean = true>(options: Options<ListChangedEntitiesData, ThrowOnError>): RequestResult<ListChangedEntitiesResponses, ListChangedEntitiesErrors, ThrowOnError> {
@@ -554,7 +559,7 @@ export class LeagueNews extends HeyApiClient {
     /**
      * List current injuries
      *
-     * Open injuries, each with its latest report. Filled for the NFL; other leagues answer an empty list.
+     * Open injuries, each with its latest report. Filled for the NFL and NHL. Other leagues return an empty list.
      */
     public listInjuries<ThrowOnError extends boolean = true>(options: Options<ListInjuriesData, ThrowOnError>): RequestResult<ListInjuriesResponses, ListInjuriesErrors, ThrowOnError> {
         return (options.client ?? this.client).get<ListInjuriesResponses, ListInjuriesErrors, ThrowOnError>({
