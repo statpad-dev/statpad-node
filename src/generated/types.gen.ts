@@ -81,6 +81,9 @@ export type PlayList = {
 export type PlayGroupList = {
     data: Array<PlayGroup>;
     next_cursor: NextCursor;
+    /**
+     * The position in the game's stream this page reflects. When paging, resume the stream from the first page's seq.
+     */
     seq: Seq;
 };
 
@@ -89,6 +92,9 @@ export type BoxScore = {
     period_scores: Array<PeriodScore>;
     teams: Array<TeamGameStats>;
     players: Array<PlayerGameStats>;
+    /**
+     * The position in the game's stream this response reflects. Resume a subscription from it.
+     */
     seq: Seq;
 };
 
@@ -96,6 +102,9 @@ export type GameRosterList = {
     data: Array<GameRosterEntry>;
     players: Array<Player>;
     next_cursor: NextCursor;
+    /**
+     * The position in the game's stream this page reflects. When paging, resume the stream from the first page's seq.
+     */
     seq: Seq;
 };
 
@@ -103,7 +112,7 @@ export type ChangeList = {
     stream: StreamName;
     data: Array<Change>;
     /**
-     * The stream's last seq visible to this plan. Fewer changes than `limit` and the last one at `head_seq` means caught up.
+     * The stream's latest seq. When the last change you applied has this seq, you're caught up.
      */
     head_seq: Seq;
     /**
@@ -236,6 +245,16 @@ export type Team = {
      */
     alias: string;
     venue_id: string | null;
+    /**
+     * The team's primary colour as #RRGGBB, from the data feed and corrected where Statpad has
+     * reviewed it against the team's own brand guide. Null when unknown.
+     *
+     */
+    color?: string | null;
+    /**
+     * The team's secondary colour as #RRGGBB, from the same sources as `color`. Null when unknown.
+     */
+    alternate_color?: string | null;
     active: boolean;
     version: Version;
     updated_at: string;
@@ -350,6 +369,12 @@ export type LiveState = {
     game_id: string;
     period: number | null;
     period_half: PeriodHalf | null;
+    /**
+     * Seconds left in the period. Basketball rounds up, so 0 means the period is over. Null in
+     * soccer, whose clock counts up, so the match minute is in `soccer`. Null in a hockey
+     * shootout and in baseball, which have no clock.
+     *
+     */
     clock_seconds: number | null;
     /**
      * Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football, basketball and hockey feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post. Baseball has no clock, so it is null.
@@ -364,19 +389,19 @@ export type LiveState = {
     last_play_id: string | null;
     football: FootballSituation | null;
     /**
-     * Always sent, but left out of live states journaled before soccer shipped; treat a missing block as null.
+     * Null unless the game is soccer.
      */
     soccer?: SoccerSituation | null;
     /**
-     * Always sent, but left out of live states journaled before basketball shipped; treat a missing block as null.
+     * Null unless the game is basketball.
      */
     basketball?: BasketballSituation | null;
     /**
-     * Always sent, but left out of live states journaled before hockey shipped; treat a missing block as null.
+     * Null unless the game is hockey.
      */
     hockey?: HockeySituation | null;
     /**
-     * Always sent, but left out of live states journaled before baseball shipped; treat a missing block as null.
+     * Null unless the game is baseball.
      */
     baseball?: BaseballSituation | null;
     version: Version;
@@ -384,7 +409,7 @@ export type LiveState = {
 };
 
 /**
- * Top or bottom of an inning. Other sports have no halves, so the field is null.
+ * Top or bottom of an inning. The away team bats in the top and the home team in the bottom. Other sports have no halves, so the field is null.
  */
 export type PeriodHalf = 'top' | 'bottom';
 
@@ -543,7 +568,7 @@ export type PlayGroup = {
     result: string | null;
     football: FootballDrive | null;
     /**
-     * Always sent, but left out of play groups journaled before baseball shipped; treat a missing block as null.
+     * Null unless the game is baseball.
      */
     baseball?: BaseballAtBat | null;
     version: Version;
@@ -551,13 +576,28 @@ export type PlayGroup = {
 };
 
 export type FootballDrive = {
+    /**
+     * Seconds left in the period when the drive started.
+     */
     start_clock: number | null;
+    /**
+     * Seconds left in the period when the drive ended.
+     */
     end_clock: number | null;
+    /**
+     * Where the drive started, 0-100 from the offense's own goal line.
+     */
     start_yardline: number | null;
+    /**
+     * Where the drive ended, 0-100 from the offense's own goal line.
+     */
     end_yardline: number | null;
     play_count: number | null;
     yards: number | null;
     first_downs: number | null;
+    /**
+     * Time of possession in seconds.
+     */
     duration_seconds: number | null;
     points: number | null;
 };
@@ -599,7 +639,15 @@ export type Play = {
     sequence: number;
     period: number;
     period_half: PeriodHalf | null;
+    /**
+     * Seconds left in the period when the play happened. Null in soccer, whose events carry
+     * `soccer.minute` instead. Null in a hockey shootout and in baseball, which have no clock.
+     *
+     */
     clock_seconds: number | null;
+    /**
+     * When the play happened, by the feed's own clock.
+     */
     wall_clock: string | null;
     /**
      * The play's type in its sport's vocabulary. Football uses the FootballPlayType values, soccer the
@@ -638,19 +686,19 @@ export type Play = {
     participants: Array<Participant>;
     football: FootballPlay | null;
     /**
-     * Always sent, but left out of plays journaled before soccer shipped; treat a missing block as null.
+     * Null unless the game is soccer.
      */
     soccer?: SoccerPlay | null;
     /**
-     * Always sent, but left out of plays journaled before basketball shipped; treat a missing block as null.
+     * Null unless the game is basketball.
      */
     basketball?: BasketballPlay | null;
     /**
-     * Always sent, but left out of plays journaled before hockey shipped; treat a missing block as null.
+     * Null unless the game is hockey.
      */
     hockey?: HockeyPlay | null;
     /**
-     * Always sent, but left out of plays journaled before baseball shipped; treat a missing block as null.
+     * Null unless the game is baseball.
      */
     baseball?: BaseballPlay | null;
     version: Version;
@@ -677,7 +725,13 @@ export type FootballPlay = {
     play_type: FootballPlayType;
     down: number | null;
     yards_to_go: number | null;
+    /**
+     * Where the play started, 0-100 from the offense's own goal line.
+     */
     start_yardline: number | null;
+    /**
+     * Where the play ended, 0-100 from the offense's own goal line.
+     */
     end_yardline: number | null;
     yards_gained: number | null;
     is_first_down: boolean;
@@ -1070,15 +1124,8 @@ export type ChangedEntity = {
 };
 
 /**
- * `bad_request` a malformed request or message. `unauthorized` a missing or invalid API key.
- * `forbidden` the plan doesn't include the league or feature. `not_found`. `rate_limited`.
- * `resync_required` the requested position is older than the retained history, so subscribe
- * again without `resume` for a fresh snapshot (for a game stream, a REST game read with its
- * `seq` also works). `invalid_resume` a resume
- * seq beyond the stream's head. `slow_consumer` the client fell too far behind and was
- * dropped from a stream, so resume from `resume_from`. `too_many_subscriptions`.
- * `unknown_stream`. `internal`. `unavailable`. `quota_exhausted` the account has used its
- * request allowance for the current period, which REST and streams share.
+ * A stable code to branch on. [Errors](https://statpad.dev/docs/errors) says what each code
+ * means and what to do about it.
  *
  */
 export type ErrorCode = 'bad_request' | 'unauthorized' | 'forbidden' | 'not_found' | 'rate_limited' | 'resync_required' | 'invalid_resume' | 'slow_consumer' | 'too_many_subscriptions' | 'unknown_stream' | 'internal' | 'unavailable' | 'quota_exhausted';
@@ -1122,7 +1169,9 @@ export type ListLeaguesErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
@@ -1168,15 +1217,17 @@ export type ListGamesData = {
          */
         date?: string;
         /**
-         * IANA time zone that `date` is in.
+         * IANA time zone that `date` is in. An unknown zone returns 400.
          */
         tz?: string;
         /**
-         * Earliest start time, inclusive.
+         * Earliest start time, inclusive. Send it with `to`, at most 31 days apart, and never with
+         * `date`. A `time_tbd` game matches by its `scheduled_at`, the start of its US Eastern day.
+         *
          */
         from?: string;
         /**
-         * Latest start time, exclusive.
+         * Latest start time, exclusive. It must be after `from`.
          */
         to?: string;
         /**
@@ -1205,11 +1256,15 @@ export type ListGamesErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1268,11 +1323,15 @@ export type GetGameErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1340,11 +1399,15 @@ export type ListPlaysErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1412,11 +1475,15 @@ export type ListPlayGroupsErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1475,11 +1542,15 @@ export type GetBoxScoreErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1547,11 +1618,15 @@ export type ListGameRosterErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1613,11 +1688,15 @@ export type ListGameChangesErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1690,11 +1769,15 @@ export type ListTeamsErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1753,11 +1836,15 @@ export type GetTeamErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1829,11 +1916,15 @@ export type GetTeamRosterErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1892,11 +1983,15 @@ export type GetDepthChartErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -1955,11 +2050,15 @@ export type GetPlayerErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -2029,11 +2128,15 @@ export type ListPlayerStatsErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -2104,11 +2207,15 @@ export type ListInjuriesErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -2147,6 +2254,9 @@ export type ListTransactionsData = {
         league: LeagueAlias;
     };
     query: {
+        /**
+         * Earliest announcement time, inclusive.
+         */
         since: string;
         /**
          * `next_cursor` from the previous page. Omit it for the first page.
@@ -2170,11 +2280,15 @@ export type ListTransactionsErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -2211,24 +2325,38 @@ export type ListLeadersData = {
          * The league's alias.
          */
         league: LeagueAlias;
+        /**
+         * The year the season starts, so the 2026-27 NBA season is 2026.
+         */
         year: number;
         season_type: SeasonType;
     };
     query: {
+        /**
+         * The box-score category, such as `passing` or `rushing`.
+         * [Coverage by league](https://statpad.dev/docs/coverage#stat-keys) lists them.
+         *
+         */
         category: string;
         /**
-         * The stat code to rank by.
+         * The stat code to rank by, such as `yards`. Only numeric stats rank.
          */
         stat: string;
         /**
          * `desc` ranks high values first; `asc` suits low-is-better stats such as ERA.
          */
         order?: 'asc' | 'desc';
+        /**
+         * Fewest games played.
+         */
         min_games?: number;
         /**
          * A second stat a player needs at least `qualifier_min` of, such as attempts.
          */
         qualifier?: string;
+        /**
+         * The lowest value of `qualifier` a player needs.
+         */
         qualifier_min?: number;
         /**
          * `next_cursor` from the previous page. Omit it for the first page.
@@ -2252,11 +2380,15 @@ export type ListLeadersErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**
@@ -2295,9 +2427,12 @@ export type ListChangedEntitiesData = {
         league: LeagueAlias;
     };
     query: {
+        /**
+         * Where the window starts, inclusive. Send the same `from` with every `cursor`.
+         */
         from: string;
         /**
-         * Where the window should end. It ends earlier when the limits above say so.
+         * Where the window should end. Statpad ignores it on later pages.
          */
         to?: string;
         /**
@@ -2322,11 +2457,15 @@ export type ListChangedEntitiesErrors = {
      */
     401: Problem;
     /**
-     * The plan doesn't include this league or feature (`forbidden`).
+     * The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+     * An unknown league alias also returns 403.
+     *
      */
     403: Problem;
     /**
-     * No such league or entity (`not_found`).
+     * No such game, team, player or season in this league, or the team has no depth chart
+     * (`not_found`).
+     *
      */
     404: Problem;
     /**

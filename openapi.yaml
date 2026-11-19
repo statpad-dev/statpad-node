@@ -7,45 +7,38 @@ info:
   description: |
     Live and historical sports data: schedules, games with live state, play-by-play, box scores,
     players, rosters, depth charts, injuries, transactions and season leaders. The WebSocket
-    stream (asyncapi.yaml) pushes the same entities as they change.
+    stream pushes the same entities as they change.
 
-    **Entities.** Every entity in a response is a public DTO from schemas.yaml, the same shape a
-    stream message carries. They reference each other by id; list responses add the teams or
-    players they reference alongside the page, so one request is enough to render it.
+    **Entities.** Every entity has the same JSON here and on the stream. Entities reference each
+    other by id, and a list response adds the teams or players its page references.
 
-    **Pagination.** Lists are cursor-paginated, except the game changes feed, which is the
-    journal itself and pages by `after_seq`. Pass `next_cursor` back as `cursor` until it is
-    null. Cursors are opaque and stay valid indefinitely. Each page is read when it is requested,
-    so an entity that changes while you page can move across a page boundary. Game-scoped lists
-    return `seq`: to stay exact, resume `game:<id>` from the first page's seq. Replaying a change
-    you already have is harmless, because every change carries the entity's full state and
-    version. Other cursor-paged lists carry no seq and are current as of each page's read.
+    **Conventions.** IDs are UUIDv7 strings. Times are RFC 3339 in UTC, and dates are
+    `YYYY-MM-DD`. Every field is present, with null where the value is unknown.
+
+    **Compatibility.** Fields are only ever added, and enums only gain values, so ignore fields
+    and values you don't know. The stream and the changes feed replay an old change as it was
+    stored, without fields added after it. Treat a missing field as null.
+
+    **Pagination.** Pass `next_cursor` back as `cursor` until it's null. Cursors don't expire.
+    Each page is read when you request it, so an entity that changes while you page can move
+    between pages.
 
     **Catching up live.** Game reads return `seq`, the position in the game's stream that the
-    response reflects. Subscribe to `game:<id>` with that seq as the resume point to receive
-    exactly the changes after the response, with nothing missed and nothing repeated. Teams,
-    players and venues are shared by many games, so their changes arrive on `league:<alias>`.
+    response reflects. Subscribe to `game:<id>` with that seq as the resume point to get every
+    change after the response, with none missing and none repeated.
 
-    **Caching.** Responses that carry an `ETag` answer a matching `If-None-Match` with 304.
+    **Caching.** The endpoints that accept `If-None-Match` return an `ETag`. A match returns 304
+    with no body. A 304 still counts as one request.
 
-    **Errors** are RFC 9457 problem details (`application/problem+json`) with a stable `code`.
+    **Errors** are RFC 9457 problem details, sent as `application/problem+json`, with a stable `code`.
+    [Errors](https://statpad.dev/docs/errors) explains each code.
 
-    **Limits.** An account's keys share one request rate and one allowance per monthly period,
-    across every server. The rate is a token bucket: the plan's burst can be sent at once, and it
-    refills at the plan's sustained rate. A request beyond it gets 429 `rate_limited`, and past
-    the period allowance 429 `quota_exhausted` with `resets_at`; both carry `Retry-After` in
-    seconds and return no data. Only `2xx` and `304` responses use the allowance: errors,
-    including `403`, `404` and `429`, don't. If the limits can't be checked, the request gets 503
-    `unavailable` rather than being served unmetered.
+    **Limits.** An account's keys share one request rate and one monthly allowance. See
+    [Rate limits](https://statpad.dev/docs/get-started/rate-limits) for each plan's limits.
 
-    **Usage headers.** Every metered response, 429s included, reports the period allowance in
-    the `RateLimit-Policy` and `RateLimit` fields of
-    [draft-ietf-httpapi-ratelimit-headers-11](https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-ratelimit-headers-11):
-    `RateLimit-Policy: "allowance";q=100000;w=2592000` is the allowance and the period's
-    length in seconds, and `RateLimit: "allowance";r=99120;t=1723456` is the requests left
-    after this response and the seconds until the period renews. The token bucket isn't
-    reported; pace with the plan's published rate and back off on `Retry-After`. The
-    [Rate limits](https://statpad.dev/docs/get-started/rate-limits) guide covers both headers in full.
+    **Usage headers.** Every metered response reports the allowance in `RateLimit-Policy` and
+    `RateLimit`. [Rate limits](https://statpad.dev/docs/get-started/rate-limits#usage-headers)
+    explains both.
 servers:
   - url: https://api.statpad.dev
     description: Production.
@@ -98,11 +91,10 @@ paths:
       tags: [Games]
       summary: List games
       description: |
-        A schedule page, ordered by start time. Pass either `date`, a schedule day, or a
-        `from`-`to` range of start times up to 31 days long. Games are listed once the league
-        publishes them with both teams known, up to the end of its season, and a game the league
-        withdraws before it starts is removed. A range matches `time_tbd` games by their
-        `scheduled_at`, the start of their US Eastern day.
+        A schedule page, ordered by start time. Pass either `date` or both `from` and `to`.
+
+        A game appears once the league publishes it with both teams known, through the end of its
+        season. A game the league withdraws before it starts disappears from the list.
       parameters:
         - {$ref: "#/components/parameters/League"}
         - name: date
@@ -114,15 +106,17 @@ paths:
           example: "2026-11-07"
         - name: tz
           in: query
-          description: IANA time zone that `date` is in.
+          description: IANA time zone that `date` is in. An unknown zone returns 400.
           schema: {type: string, default: America/New_York}
         - name: from
           in: query
-          description: Earliest start time, inclusive.
+          description: |
+            Earliest start time, inclusive. Send it with `to`, at most 31 days apart, and never with
+            `date`. A `time_tbd` game matches by its `scheduled_at`, the start of its US Eastern day.
           schema: {type: string, format: date-time}
         - name: to
           in: query
-          description: Latest start time, exclusive.
+          description: Latest start time, exclusive. It must be after `from`.
           schema: {type: string, format: date-time}
         - name: team_id
           in: query
@@ -322,10 +316,13 @@ paths:
       tags: [Changes]
       summary: Read a game's change stream
       description: |
-        The same changes the WebSocket stream `game:<id>` carries, after a seq, oldest first.
-        Poll it with the last seq you applied. A game's stream stays readable for at least 7 days
-        after the game ends; after that, or when `after_seq` is older than what is retained,
-        it returns 410 with code `resync_required`, and the client fetches the game again.
+        Up to `limit` of the changes the stream `game:<id>` carries after `after_seq`, oldest first.
+        Poll it with the last seq you applied. Changes stay readable for at least 7 days after the
+        game ends.
+
+        - An `after_seq` older than `min_seq` - 1 returns 410 `resync_required`. Read the game and
+          continue from its `seq`.
+        - An `after_seq` past `head_seq` returns 400 `bad_request`.
       parameters:
         - {$ref: "#/components/parameters/League"}
         - {$ref: "#/components/parameters/GameID"}
@@ -552,7 +549,7 @@ paths:
       operationId: listInjuries
       tags: [League news]
       summary: List current injuries
-      description: Open injuries, each with its latest report. Filled for the NFL; other leagues answer an empty list.
+      description: Open injuries, each with its latest report. Filled for the NFL and NHL. Other leagues return an empty list.
       parameters:
         - {$ref: "#/components/parameters/League"}
         - name: team_id
@@ -595,6 +592,7 @@ paths:
         - name: since
           in: query
           required: true
+          description: Earliest announcement time, inclusive.
           schema: {type: string, format: date-time}
         - {$ref: "#/components/parameters/Cursor"}
         - {$ref: "#/components/parameters/Limit"}
@@ -621,12 +619,14 @@ paths:
       summary: List season leaders for a stat
       description: |
         Players ranked by one stat of their season totals across teams. Ties are broken by player
-        id, so pages are stable.
+        id, so pages are stable. An unknown `category` or `stat` returns an empty list, and a
+        season Statpad doesn't hold returns 404.
       parameters:
         - {$ref: "#/components/parameters/League"}
         - name: year
           in: path
           required: true
+          description: The year the season starts, so the 2026-27 NBA season is 2026.
           schema: {type: integer, format: int32}
           example: 2026
         - name: season_type
@@ -636,12 +636,15 @@ paths:
         - name: category
           in: query
           required: true
+          description: |
+            The box-score category, such as `passing` or `rushing`.
+            [Coverage by league](https://statpad.dev/docs/coverage#stat-keys) lists them.
           schema: {type: string}
           example: passing
         - name: stat
           in: query
           required: true
-          description: The stat code to rank by.
+          description: The stat code to rank by, such as `yards`. Only numeric stats rank.
           schema: {type: string}
           example: yards
         - name: order
@@ -653,6 +656,7 @@ paths:
             default: desc
         - name: min_games
           in: query
+          description: Fewest games played.
           schema: {type: integer, format: int32, minimum: 0, default: 0}
         - name: qualifier
           in: query
@@ -660,6 +664,7 @@ paths:
           schema: {type: string}
         - name: qualifier_min
           in: query
+          description: The lowest value of `qualifier` a player needs.
           schema: {type: number, format: double, default: 0}
         - {$ref: "#/components/parameters/Cursor"}
         - {$ref: "#/components/parameters/Limit"}
@@ -686,18 +691,21 @@ paths:
       summary: List entities changed in a time window
       description: |
         Which entities of a league changed in [`from`, `window_end`), each once per game with its
-        latest version, for clients that refetch rather than stream. A window ends no later than 60
-        seconds ago and spans at most 24 hours, so a change is never missed: poll again with
-        `from=window_end`. For lower latency, follow a stream's seq instead.
+        latest version, for clients that refetch rather than stream.
+
+        The window ends at `to`, but never more than 24 hours after `from` and never later than 60
+        seconds ago. Page with `cursor` and the same `from`. Once `next_cursor` is null, poll the
+        next window with `from=window_end`.
       parameters:
         - {$ref: "#/components/parameters/League"}
         - name: from
           in: query
           required: true
+          description: Where the window starts, inclusive. Send the same `from` with every `cursor`.
           schema: {type: string, format: date-time}
         - name: to
           in: query
-          description: Where the window should end. It ends earlier when the limits above say so.
+          description: Where the window should end. Statpad ignores it on later pages.
           schema: {type: string, format: date-time}
         - {$ref: "#/components/parameters/Cursor"}
         - name: limit
@@ -803,7 +811,9 @@ components:
         application/problem+json:
           schema: {$ref: "#/components/schemas/Problem"}
     Forbidden:
-      description: The plan doesn't include this league or feature (`forbidden`).
+      description: |
+        The account is inactive, or its plan doesn't include this league or feature (`forbidden`).
+        An unknown league alias also returns 403.
       headers:
         RateLimit-Policy: {$ref: "#/components/headers/RateLimitPolicy"}
         RateLimit: {$ref: "#/components/headers/RateLimit"}
@@ -811,7 +821,9 @@ components:
         application/problem+json:
           schema: {$ref: "#/components/schemas/Problem"}
     NotFound:
-      description: No such league or entity (`not_found`).
+      description: |
+        No such game, team, player or season in this league, or the team has no depth chart
+        (`not_found`).
       headers:
         RateLimit-Policy: {$ref: "#/components/headers/RateLimitPolicy"}
         RateLimit: {$ref: "#/components/headers/RateLimit"}
@@ -938,7 +950,9 @@ components:
       properties:
         data: {type: array, items: {$ref: "#/components/schemas/PlayGroup"}}
         next_cursor: {$ref: "#/components/schemas/NextCursor"}
-        seq: {$ref: "#/components/schemas/Seq"}
+        seq:
+          allOf: [{$ref: "#/components/schemas/Seq"}]
+          description: The position in the game's stream this page reflects. When paging, resume the stream from the first page's seq.
     BoxScore:
       type: object
       required: [game_id, period_scores, teams, players, seq]
@@ -947,7 +961,9 @@ components:
         period_scores: {type: array, items: {$ref: "#/components/schemas/PeriodScore"}}
         teams: {type: array, items: {$ref: "#/components/schemas/TeamGameStats"}}
         players: {type: array, items: {$ref: "#/components/schemas/PlayerGameStats"}}
-        seq: {$ref: "#/components/schemas/Seq"}
+        seq:
+          allOf: [{$ref: "#/components/schemas/Seq"}]
+          description: The position in the game's stream this response reflects. Resume a subscription from it.
     GameRosterList:
       type: object
       required: [data, players, next_cursor, seq]
@@ -955,7 +971,9 @@ components:
         data: {type: array, items: {$ref: "#/components/schemas/GameRosterEntry"}}
         players: {type: array, items: {$ref: "#/components/schemas/Player"}}
         next_cursor: {$ref: "#/components/schemas/NextCursor"}
-        seq: {$ref: "#/components/schemas/Seq"}
+        seq:
+          allOf: [{$ref: "#/components/schemas/Seq"}]
+          description: The position in the game's stream this page reflects. When paging, resume the stream from the first page's seq.
     ChangeList:
       type: object
       required: [stream, data, head_seq, min_seq]
@@ -964,7 +982,7 @@ components:
         data: {type: array, items: {$ref: "#/components/schemas/Change"}}
         head_seq:
           allOf: [{$ref: "#/components/schemas/Seq"}]
-          description: The stream's last seq visible to this plan. Fewer changes than `limit` and the last one at `head_seq` means caught up.
+          description: The stream's latest seq. When the last change you applied has this seq, you're caught up.
         min_seq:
           allOf: [{$ref: "#/components/schemas/Seq"}]
           description: The oldest seq the stream still holds.
@@ -1109,6 +1127,18 @@ components:
           description: Abbreviation. Two teams in a league can share one, so identify teams by id.
           examples: [BUF]
         venue_id: {type: [string, "null"], format: uuid}
+        color:
+          type: [string, "null"]
+          pattern: "^#[0-9A-F]{6}$"
+          description: |
+            The team's primary colour as #RRGGBB, from the data feed and corrected where Statpad has
+            reviewed it against the team's own brand guide. Null when unknown.
+          examples: ["#00338D"]
+        alternate_color:
+          type: [string, "null"]
+          pattern: "^#[0-9A-F]{6}$"
+          description: "The team's secondary colour as #RRGGBB, from the same sources as `color`. Null when unknown."
+          examples: ["#C60C30"]
         active: {type: boolean}
         version: {$ref: "#/components/schemas/Version"}
         updated_at: {type: string, format: date-time}
@@ -1228,7 +1258,13 @@ components:
         game_id: {type: string, format: uuid}
         period: {type: [integer, "null"], format: int32}
         period_half: {oneOf: [{$ref: "#/components/schemas/PeriodHalf"}, {type: "null"}]}
-        clock_seconds: {type: [integer, "null"], format: int32}
+        clock_seconds:
+          type: [integer, "null"]
+          format: int32
+          description: |
+            Seconds left in the period. Basketball rounds up, so 0 means the period is over. Null in
+            soccer, whose clock counts up, so the match minute is in `soccer`. Null in a hockey
+            shootout and in baseball, which have no clock.
         clock_running:
           type: [boolean, "null"]
           description: >-
@@ -1246,25 +1282,25 @@ components:
             - {$ref: "#/components/schemas/FootballSituation"}
             - {type: "null"}
         soccer:
-          description: Always sent, but left out of live states journaled before soccer shipped; treat a missing block as null.
+          description: Null unless the game is soccer.
           oneOf:
             - {$ref: "#/components/schemas/SoccerSituation"}
             - {type: "null"}
           x-omitempty: false
         basketball:
-          description: Always sent, but left out of live states journaled before basketball shipped; treat a missing block as null.
+          description: Null unless the game is basketball.
           oneOf:
             - {$ref: "#/components/schemas/BasketballSituation"}
             - {type: "null"}
           x-omitempty: false
         hockey:
-          description: Always sent, but left out of live states journaled before hockey shipped; treat a missing block as null.
+          description: Null unless the game is hockey.
           oneOf:
             - {$ref: "#/components/schemas/HockeySituation"}
             - {type: "null"}
           x-omitempty: false
         baseball:
-          description: Always sent, but left out of live states journaled before baseball shipped; treat a missing block as null.
+          description: Null unless the game is baseball.
           oneOf:
             - {$ref: "#/components/schemas/BaseballSituation"}
             - {type: "null"}
@@ -1273,7 +1309,7 @@ components:
         updated_at: {type: string, format: date-time}
     PeriodHalf:
       type: string
-      description: Top or bottom of an inning. Other sports have no halves, so the field is null.
+      description: Top or bottom of an inning. The away team bats in the top and the home team in the bottom. Other sports have no halves, so the field is null.
       enum: [top, bottom]
     FootballSituation:
       type: object
@@ -1402,7 +1438,7 @@ components:
             - {$ref: "#/components/schemas/FootballDrive"}
             - {type: "null"}
         baseball:
-          description: Always sent, but left out of play groups journaled before baseball shipped; treat a missing block as null.
+          description: Null unless the game is baseball.
           oneOf:
             - {$ref: "#/components/schemas/BaseballAtBat"}
             - {type: "null"}
@@ -1413,14 +1449,24 @@ components:
       type: object
       required: [start_clock, end_clock, start_yardline, end_yardline, play_count, yards, first_downs, duration_seconds, points]
       properties:
-        start_clock: {type: [integer, "null"], format: int32}
-        end_clock: {type: [integer, "null"], format: int32}
-        start_yardline: {type: [integer, "null"], format: int32, minimum: 0, maximum: 100}
-        end_yardline: {type: [integer, "null"], format: int32, minimum: 0, maximum: 100}
+        start_clock: {type: [integer, "null"], format: int32, description: Seconds left in the period when the drive started.}
+        end_clock: {type: [integer, "null"], format: int32, description: Seconds left in the period when the drive ended.}
+        start_yardline:
+          type: [integer, "null"]
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Where the drive started, 0-100 from the offense's own goal line.
+        end_yardline:
+          type: [integer, "null"]
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Where the drive ended, 0-100 from the offense's own goal line.
         play_count: {type: [integer, "null"], format: int32}
         yards: {type: [integer, "null"], format: int32}
         first_downs: {type: [integer, "null"], format: int32}
-        duration_seconds: {type: [integer, "null"], format: int32}
+        duration_seconds: {type: [integer, "null"], format: int32, description: Time of possession in seconds.}
         points: {type: [integer, "null"], format: int32}
     BaseballAtBat:
       type: object
@@ -1460,8 +1506,13 @@ components:
         sequence: {type: integer, format: int64}
         period: {type: integer, format: int32}
         period_half: {oneOf: [{$ref: "#/components/schemas/PeriodHalf"}, {type: "null"}]}
-        clock_seconds: {type: [integer, "null"], format: int32}
-        wall_clock: {type: [string, "null"], format: date-time}
+        clock_seconds:
+          type: [integer, "null"]
+          format: int32
+          description: |
+            Seconds left in the period when the play happened. Null in soccer, whose events carry
+            `soccer.minute` instead. Null in a hockey shootout and in baseball, which have no clock.
+        wall_clock: {type: [string, "null"], format: date-time, description: "When the play happened, by the feed's own clock."}
         type:
           type: string
           description: |
@@ -1503,25 +1554,25 @@ components:
             - {$ref: "#/components/schemas/FootballPlay"}
             - {type: "null"}
         soccer:
-          description: Always sent, but left out of plays journaled before soccer shipped; treat a missing block as null.
+          description: Null unless the game is soccer.
           oneOf:
             - {$ref: "#/components/schemas/SoccerPlay"}
             - {type: "null"}
           x-omitempty: false
         basketball:
-          description: Always sent, but left out of plays journaled before basketball shipped; treat a missing block as null.
+          description: Null unless the game is basketball.
           oneOf:
             - {$ref: "#/components/schemas/BasketballPlay"}
             - {type: "null"}
           x-omitempty: false
         hockey:
-          description: Always sent, but left out of plays journaled before hockey shipped; treat a missing block as null.
+          description: Null unless the game is hockey.
           oneOf:
             - {$ref: "#/components/schemas/HockeyPlay"}
             - {type: "null"}
           x-omitempty: false
         baseball:
-          description: Always sent, but left out of plays journaled before baseball shipped; treat a missing block as null.
+          description: Null unless the game is baseball.
           oneOf:
             - {$ref: "#/components/schemas/BaseballPlay"}
             - {type: "null"}
@@ -1550,8 +1601,18 @@ components:
         play_type: {$ref: "#/components/schemas/FootballPlayType"}
         down: {type: [integer, "null"], format: int32, minimum: 1, maximum: 4}
         yards_to_go: {type: [integer, "null"], format: int32}
-        start_yardline: {type: [integer, "null"], format: int32, minimum: 0, maximum: 100}
-        end_yardline: {type: [integer, "null"], format: int32, minimum: 0, maximum: 100}
+        start_yardline:
+          type: [integer, "null"]
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Where the play started, 0-100 from the offense's own goal line.
+        end_yardline:
+          type: [integer, "null"]
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Where the play ended, 0-100 from the offense's own goal line.
         yards_gained: {type: [integer, "null"], format: int32}
         is_first_down: {type: boolean}
         is_touchdown: {type: boolean}
@@ -1974,13 +2035,6 @@ components:
     ErrorCode:
       type: string
       description: |
-        `bad_request` a malformed request or message. `unauthorized` a missing or invalid API key.
-        `forbidden` the plan doesn't include the league or feature. `not_found`. `rate_limited`.
-        `resync_required` the requested position is older than the retained history, so subscribe
-        again without `resume` for a fresh snapshot (for a game stream, a REST game read with its
-        `seq` also works). `invalid_resume` a resume
-        seq beyond the stream's head. `slow_consumer` the client fell too far behind and was
-        dropped from a stream, so resume from `resume_from`. `too_many_subscriptions`.
-        `unknown_stream`. `internal`. `unavailable`. `quota_exhausted` the account has used its
-        request allowance for the current period, which REST and streams share.
+        A stable code to branch on. [Errors](https://statpad.dev/docs/errors) says what each code
+        means and what to do about it.
       enum: [bad_request, unauthorized, forbidden, not_found, rate_limited, resync_required, invalid_resume, slow_consumer, too_many_subscriptions, unknown_stream, internal, unavailable, quota_exhausted]
