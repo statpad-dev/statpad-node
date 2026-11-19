@@ -41,8 +41,8 @@ info:
     **Usage headers.** Every metered response, 429s included, reports the period allowance in
     the `RateLimit-Policy` and `RateLimit` fields of
     [draft-ietf-httpapi-ratelimit-headers-11](https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-ratelimit-headers-11):
-    `RateLimit-Policy: "allowance";q=500000;w=2592000` is the allowance and the period's
-    length in seconds, and `RateLimit: "allowance";r=499120;t=1723456` is the requests left
+    `RateLimit-Policy: "allowance";q=100000;w=2592000` is the allowance and the period's
+    length in seconds, and `RateLimit: "allowance";r=99120;t=1723456` is the requests left
     after this response and the seconds until the period renews. The token bucket isn't
     reported; pace with the plan's published rate and back off on `Retry-After`. The
     [Rate limits](https://statpad.dev/docs/get-started/rate-limits) guide covers both headers in full.
@@ -172,7 +172,7 @@ paths:
               examples:
                 getGame:
                   summary: "Boise State at Colorado State in the fourth quarter"
-                  value: {"game": {"id": "01a1b987-64e7-74e3-8db1-b939d352190d", "title": null, "league": "ncaaf", "status": "inprogress", "version": 1, "week_id": "01a1b987-64e8-7837-beb6-a5d9ddf093e8", "coverage": "full", "ended_at": null, "venue_id": "01a1b987-64e8-760f-bf21-c366949b2be9", "game_type": "regular", "season_id": "01a1b987-64e8-7612-9fdf-7bb93b23171e", "attendance": null, "away_score": 43, "home_score": 24, "started_at": null, "updated_at": "2026-11-08T05:00:20.583197Z", "away_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "home_team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "neutral_site": false, "scheduled_at": "2026-11-07T23:00:00Z", "rescheduled_from_id": null}, "live_state": {"period": 4, "soccer": null, "basketball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "football": {"down": 3, "yardline": 99, "yards_to_go": 1, "away_timeouts": 0, "home_timeouts": 2}, "away_score": 43, "home_score": 24, "updated_at": "2026-11-08T05:00:20.583197Z", "period_half": null, "last_play_id": null, "clock_running": null, "clock_seconds": 778, "possession_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216"}, "home_team": {"id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "name": "Rams", "alias": "CSU", "active": true, "league": "ncaaf", "market": "Colorado State", "version": 1, "venue_id": null, "updated_at": "2026-11-08T05:00:20.583197Z"}, "away_team": {"id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "name": "Broncos", "alias": "BOIS", "active": true, "league": "ncaaf", "market": "Boise State", "version": 1, "venue_id": null, "updated_at": "2026-11-08T05:00:20.583197Z"}, "venue": {"id": "01a1b987-64e8-760f-bf21-c366949b2be9", "city": "Fort Collins", "name": "Canvas Stadium", "state": "CO", "country": null, "surface": null, "version": 1, "capacity": null, "timezone": null, "roof_type": null}, "period_scores": [{"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 1, "period_type": "regular", "points": 7}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 2, "period_type": "regular", "points": 3}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 3, "period_type": "regular", "points": 14}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 4, "period_type": "regular", "points": 0}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 1, "period_type": "regular", "points": 22}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 2, "period_type": "regular", "points": 7}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 3, "period_type": "regular", "points": 14}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 4, "period_type": "regular", "points": 0}], "seq": 283}
+                  value: {"game": {"id": "01a1b987-64e7-74e3-8db1-b939d352190d", "title": null, "league": "ncaaf", "status": "inprogress", "version": 1, "week_id": "01a1b987-64e8-7837-beb6-a5d9ddf093e8", "coverage": "full", "ended_at": null, "venue_id": "01a1b987-64e8-760f-bf21-c366949b2be9", "game_type": "regular", "season_id": "01a1b987-64e8-7612-9fdf-7bb93b23171e", "attendance": null, "away_score": 43, "home_score": 24, "started_at": null, "updated_at": "2026-11-08T05:00:20.583197Z", "away_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "home_team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "neutral_site": false, "scheduled_at": "2026-11-07T23:00:00Z", "rescheduled_from_id": null}, "live_state": {"period": 4, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "football": {"down": 3, "yardline": 99, "yards_to_go": 1, "away_timeouts": 0, "home_timeouts": 2}, "away_score": 43, "home_score": 24, "updated_at": "2026-11-08T05:00:20.583197Z", "period_half": null, "last_play_id": null, "clock_running": null, "clock_seconds": 778, "possession_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216"}, "home_team": {"id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "name": "Rams", "alias": "CSU", "active": true, "league": "ncaaf", "market": "Colorado State", "version": 1, "venue_id": null, "updated_at": "2026-11-08T05:00:20.583197Z"}, "away_team": {"id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "name": "Broncos", "alias": "BOIS", "active": true, "league": "ncaaf", "market": "Boise State", "version": 1, "venue_id": null, "updated_at": "2026-11-08T05:00:20.583197Z"}, "venue": {"id": "01a1b987-64e8-760f-bf21-c366949b2be9", "city": "Fort Collins", "name": "Canvas Stadium", "state": "CO", "country": null, "surface": null, "version": 1, "capacity": null, "timezone": null, "roof_type": null}, "period_scores": [{"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 1, "period_type": "regular", "points": 7}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 2, "period_type": "regular", "points": 3}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 3, "period_type": "regular", "points": 14}, {"team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "period": 4, "period_type": "regular", "points": 0}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 1, "period_type": "regular", "points": 22}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 2, "period_type": "regular", "points": 7}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 3, "period_type": "regular", "points": 14}, {"team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "period": 4, "period_type": "regular", "points": 0}], "seq": 283}
         "304": {$ref: "#/components/responses/NotModified"}
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Unauthorized"}
@@ -209,7 +209,7 @@ paths:
               examples:
                 listPlays:
                   summary: "The first plays of Jacksonville at Baltimore"
-                  value: {"data": [{"id": "01a1b987-647f-7087-9603-30c4fc34926e", "type": "kickoff", "period": 1, "points": 0, "soccer": null, "basketball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "version": 1, "football": {"down": null, "air_yards": null, "penalty_yards": null, "play_type": "kickoff", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": null, "end_yardline": 77, "is_touchdown": false, "yards_gained": 23, "is_first_down": false, "start_yardline": 35, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 4100000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:16:48Z", "description": "J.Moody kicks 65 yards from BLT 35 to JAX 0. J.Cameron pushed ob at JAX 23 for 23 yards (J.Higgins).", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 900}, {"id": "01a1b987-6484-72c4-9243-a555703f0f8a", "type": "pass", "period": 1, "points": 0, "soccer": null, "basketball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"down": 1, "air_yards": null, "penalty_yards": null, "play_type": "pass", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 10, "end_yardline": 27, "is_touchdown": false, "yards_gained": 4, "is_first_down": false, "start_yardline": 23, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 6900000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:17:29Z", "description": "(Shotgun) T.Lawrence pass short right to T.Koziol to JAX 27 for 4 yards (T.Simpson).", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 894}, {"id": "01a1b987-6484-7a71-b180-e341c39f9b84", "type": "pass", "period": 1, "points": 0, "soccer": null, "basketball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"down": 2, "air_yards": null, "penalty_yards": null, "play_type": "pass", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 6, "end_yardline": 79, "is_touchdown": false, "yards_gained": 52, "is_first_down": true, "start_yardline": 27, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 9400000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:18:06Z", "description": "T.Lawrence pass deep right to N.Boerkircher to BLT 21 for 52 yards (M.Humphrey).", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 857}], "next_cursor": "eyJzIjo5NDAwMDAwLCJpIjoiMDFhMWI5ODctNjQ4NC03YTcxLWIxODAtZTM0MWMzOWY5Yjg0In0", "seq": 331}
+                  value: {"data": [{"id": "01a1b987-647f-7087-9603-30c4fc34926e", "type": "kickoff", "period": 1, "points": 0, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "version": 1, "football": {"down": null, "air_yards": null, "penalty_yards": null, "play_type": "kickoff", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": null, "end_yardline": 77, "is_touchdown": false, "yards_gained": 23, "is_first_down": false, "start_yardline": 35, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 4100000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:16:48Z", "description": "J.Moody kicks 65 yards from BLT 35 to JAX 0. J.Cameron pushed ob at JAX 23 for 23 yards (J.Higgins).", "is_official": true, "period_half": null, "participants": [{"role": "kicker", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "player_id": "01a1b987-6461-7a3e-9b52-3c7d1e0f84a6"}, {"role": "returner", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "player_id": "01a1b987-6462-7c19-8d4a-52b6e91f07c3"}, {"role": "tackler", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "player_id": "01a1b987-6463-71d8-a6e5-0b94c8d2f175"}], "clock_seconds": 900}, {"id": "01a1b987-6484-72c4-9243-a555703f0f8a", "type": "pass", "period": 1, "points": 0, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"down": 1, "air_yards": 4, "penalty_yards": null, "play_type": "pass", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 10, "end_yardline": 27, "is_touchdown": false, "yards_gained": 4, "is_first_down": false, "start_yardline": 23, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 6900000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:17:29Z", "description": "(Shotgun) T.Lawrence pass short right to T.Koziol to JAX 27 for 4 yards (T.Simpson).", "is_official": true, "period_half": null, "participants": [{"role": "passer", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "player_id": "01a1b987-645b-7732-8647-a8d05695b4c2"}, {"role": "receiver", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "player_id": "01a1b987-6464-7b05-b1c7-e83a4f6d2096"}, {"role": "tackler", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "player_id": "01a1b987-6465-7e62-9f30-a7d15c8b4e21"}], "clock_seconds": 894}, {"id": "01a1b987-6484-7a71-b180-e341c39f9b84", "type": "pass", "period": 1, "points": 0, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"down": 2, "air_yards": 39, "penalty_yards": null, "play_type": "pass", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 6, "end_yardline": 79, "is_touchdown": false, "yards_gained": 52, "is_first_down": true, "start_yardline": 27, "run_pass_option": null}, "group_id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "sequence": 9400000, "away_score": 0, "home_score": 0, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.428452Z", "wall_clock": "2026-11-06T01:18:06Z", "description": "T.Lawrence pass deep right to N.Boerkircher to BLT 21 for 52 yards (M.Humphrey).", "is_official": true, "period_half": null, "participants": [{"role": "passer", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "player_id": "01a1b987-645b-7732-8647-a8d05695b4c2"}, {"role": "receiver", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "player_id": "01a1b987-6466-7843-8ac9-4d02e7b1f6a5"}, {"role": "tackler", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "player_id": "01a1b987-6467-7d97-b4e6-91c3a05f7d38"}], "clock_seconds": 857}], "next_cursor": "eyJzIjo5NDAwMDAwLCJpIjoiMDFhMWI5ODctNjQ4NC03YTcxLWIxODAtZTM0MWMzOWY5Yjg0In0", "seq": 331}
         "304": {$ref: "#/components/responses/NotModified"}
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Unauthorized"}
@@ -243,7 +243,7 @@ paths:
               examples:
                 listPlayGroups:
                   summary: "The first two drives of Jacksonville at Baltimore"
-                  value: {"data": [{"id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "kind": "drive", "period": 1, "result": "Touchdown", "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"yards": 77, "points": 7, "end_clock": 680, "play_count": 7, "first_downs": 2, "start_clock": 900, "end_yardline": 100, "start_yardline": 23, "duration_seconds": 220}, "sequence": 1, "updated_at": "2026-11-08T05:00:20.428452Z", "period_half": null}, {"id": "01a1b987-6476-7cf7-9cfd-647d59a7f8f3", "kind": "drive", "period": 1, "result": "Field Goal", "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "version": 1, "football": {"yards": 30, "points": 3, "end_clock": 391, "play_count": 8, "first_downs": 2, "start_clock": 680, "end_yardline": 65, "start_yardline": 35, "duration_seconds": 289}, "sequence": 2, "updated_at": "2026-11-08T05:00:20.428452Z", "period_half": null}], "next_cursor": "eyJzIjoyLCJpIjoiMDFhMWI5ODctNjQ3Ni03Y2Y3LTljZmQtNjQ3ZDU5YTdmOGYzIn0", "seq": 331}
+                  value: {"data": [{"id": "01a1b987-6473-7931-9855-a6ebb6a17a4e", "kind": "drive", "baseball": null, "period": 1, "result": "Touchdown", "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6452-7f29-ac56-aab66006a3f5", "version": 1, "football": {"yards": 77, "points": 7, "end_clock": 680, "play_count": 7, "first_downs": 2, "start_clock": 900, "end_yardline": 100, "start_yardline": 23, "duration_seconds": 220}, "sequence": 1, "updated_at": "2026-11-08T05:00:20.428452Z", "period_half": null}, {"id": "01a1b987-6476-7cf7-9cfd-647d59a7f8f3", "kind": "drive", "baseball": null, "period": 1, "result": "Field Goal", "game_id": "01a1b987-644f-7459-b8e0-810b314f71da", "team_id": "01a1b987-6450-7c2a-898a-4dfae5a45300", "version": 1, "football": {"yards": 30, "points": 3, "end_clock": 391, "play_count": 8, "first_downs": 2, "start_clock": 680, "end_yardline": 65, "start_yardline": 35, "duration_seconds": 289}, "sequence": 2, "updated_at": "2026-11-08T05:00:20.428452Z", "period_half": null}], "next_cursor": "eyJzIjoyLCJpIjoiMDFhMWI5ODctNjQ3Ni03Y2Y3LTljZmQtNjQ3ZDU5YTdmOGYzIn0", "seq": 331}
         "304": {$ref: "#/components/responses/NotModified"}
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Unauthorized"}
@@ -350,7 +350,7 @@ paths:
               examples:
                 listGameChanges:
                   summary: "The last plays and live state of Boise State at Colorado State"
-                  value: {"stream": "game:01a1b987-64e7-74e3-8db1-b939d352190d", "data": [{"seq": 281, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "play", "entity_id": "01a1b987-6544-7ede-a02b-c65c5c1ef848", "version": 1, "payload_version": 1, "payload": {"id": "01a1b987-6544-7ede-a02b-c65c5c1ef848", "type": "rush", "period": 4, "points": 0, "soccer": null, "basketball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "version": 1, "football": {"down": 2, "air_yards": null, "penalty_yards": null, "play_type": "rush", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 1, "end_yardline": 99, "is_touchdown": false, "yards_gained": 0, "is_first_down": false, "start_yardline": 99, "run_pass_option": null}, "group_id": "01a1b987-6502-79b3-a1f4-392748c82d5b", "sequence": 131000, "away_score": 43, "home_score": 24, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.583197Z", "wall_clock": "2026-11-08T01:39:39Z", "description": "(13:32) Shotgun #22 J.Goff rush middle for 0 yards to the CSU01 (#5 D.Hagans)", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 808}}, {"seq": 282, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "play", "entity_id": "01a1b987-6545-7914-9c9a-45d880fcf0d7", "version": 1, "payload_version": 1, "payload": {"id": "01a1b987-6545-7914-9c9a-45d880fcf0d7", "type": "timeout", "period": 4, "points": 0, "soccer": null, "basketball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "version": 1, "football": {"down": null, "air_yards": null, "penalty_yards": null, "play_type": "timeout", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": null, "end_yardline": 99, "is_touchdown": false, "yards_gained": 0, "is_first_down": false, "start_yardline": 99, "run_pass_option": null}, "group_id": "01a1b987-6502-79b3-a1f4-392748c82d5b", "sequence": 131001, "away_score": 43, "home_score": 24, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.583197Z", "wall_clock": "2026-11-08T01:40:30Z", "description": "Timeout Boise State, clock 12:58", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 778}}, {"seq": 283, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "live_state", "entity_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "payload_version": 1, "payload": {"period": 4, "soccer": null, "basketball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "football": {"down": 3, "yardline": 99, "yards_to_go": 1, "away_timeouts": 0, "home_timeouts": 2}, "away_score": 43, "home_score": 24, "updated_at": "2026-11-08T05:00:20.583197Z", "period_half": null, "last_play_id": null, "clock_running": null, "clock_seconds": 778, "possession_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216"}}], "head_seq": 283, "min_seq": 1}
+                  value: {"stream": "game:01a1b987-64e7-74e3-8db1-b939d352190d", "data": [{"seq": 281, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "play", "entity_id": "01a1b987-6544-7ede-a02b-c65c5c1ef848", "version": 1, "payload_version": 1, "payload": {"id": "01a1b987-6544-7ede-a02b-c65c5c1ef848", "type": "rush", "period": 4, "points": 0, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "version": 1, "football": {"down": 2, "air_yards": null, "penalty_yards": null, "play_type": "rush", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": 1, "end_yardline": 99, "is_touchdown": false, "yards_gained": 0, "is_first_down": false, "start_yardline": 99, "run_pass_option": null}, "group_id": "01a1b987-6502-79b3-a1f4-392748c82d5b", "sequence": 131000, "away_score": 43, "home_score": 24, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.583197Z", "wall_clock": "2026-11-08T01:39:39Z", "description": "(13:32) Shotgun #22 J.Goff rush middle for 0 yards to the CSU01 (#5 D.Hagans)", "is_official": true, "period_half": null, "participants": [{"role": "rusher", "team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "player_id": "01a1b987-654a-7b36-8e41-d7a29c5f1b08"}, {"role": "tackler", "team_id": "01a1b987-64e7-74e4-8cf6-9f7b3bdea67d", "player_id": "01a1b987-654b-7c84-9a2d-3f61e8b07c55"}], "clock_seconds": 808}}, {"seq": 282, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "play", "entity_id": "01a1b987-6545-7914-9c9a-45d880fcf0d7", "version": 1, "payload_version": 1, "payload": {"id": "01a1b987-6545-7914-9c9a-45d880fcf0d7", "type": "timeout", "period": 4, "points": 0, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216", "version": 1, "football": {"down": null, "air_yards": null, "penalty_yards": null, "play_type": "timeout", "is_penalty": false, "is_turnover": false, "play_action": null, "screen_pass": null, "yards_to_go": null, "end_yardline": 99, "is_touchdown": false, "yards_gained": 0, "is_first_down": false, "start_yardline": 99, "run_pass_option": null}, "group_id": "01a1b987-6502-79b3-a1f4-392748c82d5b", "sequence": 131001, "away_score": 43, "home_score": 24, "is_scoring": false, "updated_at": "2026-11-08T05:00:20.583197Z", "wall_clock": "2026-11-08T01:40:30Z", "description": "Timeout Boise State, clock 12:58", "is_official": true, "period_half": null, "participants": [], "clock_seconds": 778}}, {"seq": 283, "at": "2026-11-08T05:00:20.681Z", "op": "upsert", "entity_type": "live_state", "entity_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "payload_version": 1, "payload": {"period": 4, "soccer": null, "basketball": null, "hockey": null, "baseball": null, "game_id": "01a1b987-64e7-74e3-8db1-b939d352190d", "version": 1, "football": {"down": 3, "yardline": 99, "yards_to_go": 1, "away_timeouts": 0, "home_timeouts": 2}, "away_score": 43, "home_score": 24, "updated_at": "2026-11-08T05:00:20.583197Z", "period_half": null, "last_play_id": null, "clock_running": null, "clock_seconds": 778, "possession_team_id": "01a1b987-64e7-7d57-bdf8-52aecf5e4216"}}], "head_seq": 283, "min_seq": 1}
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Unauthorized"}
         "403": {$ref: "#/components/responses/Forbidden"}
@@ -775,13 +775,13 @@ components:
         Your plan's allowance: `q` requests per period of `w` seconds. See
         [Rate limits](https://statpad.dev/docs/get-started/rate-limits).
       schema: {type: string}
-      example: '"allowance";q=500000;w=2592000'
+      example: '"allowance";q=100000;w=2592000'
     RateLimit:
       description: |
         Requests left this period after this response (`r`) and seconds until it resets (`t`). See
         [Rate limits](https://statpad.dev/docs/get-started/rate-limits).
       schema: {type: string}
-      example: '"allowance";r=499120;t=1723456'
+      example: '"allowance";r=99120;t=1723456'
   responses:
     NotModified:
       description: The resource still matches `If-None-Match`.
@@ -1223,7 +1223,7 @@ components:
       description: |
         The live situation of a game, keyed by `game_id`. Sport-specific context is in the block
         named after the league's sport; the others are null.
-      required: [game_id, period, period_half, clock_seconds, clock_running, possession_team_id, home_score, away_score, last_play_id, football, soccer, basketball, version, updated_at]
+      required: [game_id, period, period_half, clock_seconds, clock_running, possession_team_id, home_score, away_score, last_play_id, football, version, updated_at]
       properties:
         game_id: {type: string, format: uuid}
         period: {type: [integer, "null"], format: int32}
@@ -1232,7 +1232,7 @@ components:
         clock_running:
           type: [boolean, "null"]
           description: >-
-            Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football and basketball feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post.
+            Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football, basketball and hockey feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post. Baseball has no clock, so it is null.
         possession_team_id: {type: [string, "null"], format: uuid}
         home_score: {type: integer, format: int32}
         away_score: {type: integer, format: int32}
@@ -1246,13 +1246,29 @@ components:
             - {$ref: "#/components/schemas/FootballSituation"}
             - {type: "null"}
         soccer:
+          description: Always sent, but left out of live states journaled before soccer shipped; treat a missing block as null.
           oneOf:
             - {$ref: "#/components/schemas/SoccerSituation"}
             - {type: "null"}
+          x-omitempty: false
         basketball:
+          description: Always sent, but left out of live states journaled before basketball shipped; treat a missing block as null.
           oneOf:
             - {$ref: "#/components/schemas/BasketballSituation"}
             - {type: "null"}
+          x-omitempty: false
+        hockey:
+          description: Always sent, but left out of live states journaled before hockey shipped; treat a missing block as null.
+          oneOf:
+            - {$ref: "#/components/schemas/HockeySituation"}
+            - {type: "null"}
+          x-omitempty: false
+        baseball:
+          description: Always sent, but left out of live states journaled before baseball shipped; treat a missing block as null.
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballSituation"}
+            - {type: "null"}
+          x-omitempty: false
         version: {$ref: "#/components/schemas/Version"}
         updated_at: {type: string, format: date-time}
     PeriodHalf:
@@ -1308,6 +1324,31 @@ components:
         away_timeouts: {type: [integer, "null"], format: int32, description: Timeouts the away team has left.}
         home_fouls: {type: [integer, "null"], format: int32, description: The home team's fouls in the current period.}
         away_fouls: {type: [integer, "null"], format: int32, description: The away team's fouls in the current period.}
+    HockeySituation:
+      type: object
+      description: |
+        The live hockey context. Periods 1-3 are regulation and 4 the overtime, 5 minutes in the regular season
+        and 20 in the playoffs, where every later period is another 20-minute overtime. A regular-season game
+        still tied after overtime goes to a shootout, period 5. Manpower is on each play as `strength`; there is
+        no live power-play state.
+      required: [home_shootout, away_shootout]
+      properties:
+        home_shootout: {type: [integer, "null"], format: int32, description: "Goals the home team scored in the shootout, null until one starts."}
+        away_shootout: {type: [integer, "null"], format: int32, description: "Goals the away team scored in the shootout, null until one starts."}
+    BaseballSituation:
+      type: object
+      description: |
+        The live baseball context: the count and outs of the at-bat in progress and the runners on base. Innings
+        1-9 are regulation and every later one is an extra inning. Between at-bats the count is 0-0; once a
+        half-inning ends, `outs` is 3 and the bases are empty until the next half starts.
+      required: [balls, strikes, outs, on_first, on_second, on_third]
+      properties:
+        balls: {type: integer, format: int32, minimum: 0, maximum: 4}
+        strikes: {type: integer, format: int32, minimum: 0, maximum: 3}
+        outs: {type: integer, format: int32, minimum: 0, maximum: 3}
+        on_first: {type: [string, "null"], format: uuid, description: "The runner on first base, or null when it is empty."}
+        on_second: {type: [string, "null"], format: uuid, description: "The runner on second base, or null when it is empty."}
+        on_third: {type: [string, "null"], format: uuid, description: "The runner on third base, or null when it is empty."}
     PeriodScore:
       type: object
       required: [team_id, period, period_type, points]
@@ -1350,11 +1391,22 @@ components:
         period: {type: integer, format: int32}
         period_half: {oneOf: [{$ref: "#/components/schemas/PeriodHalf"}, {type: "null"}]}
         team_id: {type: [string, "null"], format: uuid, description: The team with the ball or at bat.}
-        result: {type: [string, "null"], examples: [Touchdown]}
+        result:
+          type: [string, "null"]
+          description: |
+            How the group ended, as the provider words it: a drive's result, or an at-bat's outcome (`Fly Out`),
+            whose normalized form is the `baseball` block's `result`.
+          examples: [Touchdown]
         football:
           oneOf:
             - {$ref: "#/components/schemas/FootballDrive"}
             - {type: "null"}
+        baseball:
+          description: Always sent, but left out of play groups journaled before baseball shipped; treat a missing block as null.
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballAtBat"}
+            - {type: "null"}
+          x-omitempty: false
         version: {$ref: "#/components/schemas/Version"}
         updated_at: {type: string, format: date-time}
     FootballDrive:
@@ -1370,12 +1422,37 @@ components:
         first_downs: {type: [integer, "null"], format: int32}
         duration_seconds: {type: [integer, "null"], format: int32}
         points: {type: [integer, "null"], format: int32}
+    BaseballAtBat:
+      type: object
+      description: |
+        One batter's plate appearance against one pitcher, the one on the mound when it ended. `outs_before` and
+        `outs_after` are the outs in the half-inning when it started and ended, so outs made on the bases during it
+        count too. `balls` and `strikes` are the count it ended at, or stands at while it lasts. `is_complete` is
+        set once it is over, and `result` once the batter has one; an at-bat the half-inning ended first, as on a
+        runner caught stealing for the third out, is complete with no result.
+      required: [batter_id, pitcher_id, outs_before, outs_after, balls, strikes, rbi, result, is_complete]
+      properties:
+        batter_id: {type: string, format: uuid}
+        pitcher_id: {type: string, format: uuid}
+        outs_before: {type: integer, format: int32, minimum: 0, maximum: 2}
+        outs_after: {type: integer, format: int32, minimum: 0, maximum: 3}
+        balls: {type: integer, format: int32, minimum: 0, maximum: 4}
+        strikes: {type: integer, format: int32, minimum: 0, maximum: 3}
+        rbi: {type: integer, format: int32, minimum: 0, maximum: 4, description: Runs batted in.}
+        result:
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballAtBatResult"}
+            - {type: "null"}
+        is_complete: {type: boolean}
+    BaseballAtBatResult:
+      type: string
+      enum: [single, double, triple, home_run, walk, intentional_walk, hit_by_pitch, strikeout, ground_out, fly_out, line_out, pop_out, foul_out, sacrifice_fly, sacrifice_bunt, fielders_choice, reached_on_error, catcher_interference, other]
     Play:
       type: object
       description: |
         One event in a game. `sequence` is the provider's total order within the game; two plays
         can share it, so order by (`sequence`, `id`). Corrections bump `version`.
-      required: [id, game_id, group_id, sequence, period, period_half, clock_seconds, wall_clock, type, description, team_id, is_scoring, points, home_score, away_score, is_official, participants, football, soccer, basketball, version, updated_at]
+      required: [id, game_id, group_id, sequence, period, period_half, clock_seconds, wall_clock, type, description, team_id, is_scoring, points, home_score, away_score, is_official, participants, football, version, updated_at]
       properties:
         id: {type: string, format: uuid}
         game_id: {type: string, format: uuid}
@@ -1389,19 +1466,34 @@ components:
           type: string
           description: |
             The play's type in its sport's vocabulary. Football uses the FootballPlayType values, soccer the
-            SoccerPlayType values and basketball the BasketballPlayType values.
+            SoccerPlayType values, basketball the BasketballPlayType values, hockey the HockeyPlayType values and
+            baseball the BaseballPlayType values.
           examples: [pass]
-        description: {type: [string, "null"]}
+        description:
+          type: [string, "null"]
+          description: |
+            A one-line summary of the play. Football, basketball, hockey and baseball plays carry the
+            provider's play text. Soccer descriptions are Statpad's own, written from the event's fields, such
+            as `Goal: Alysson (Aston Villa), left foot, assisted by John McGinn. Manchester United 0, Aston Villa 1.`
+            Read the structured fields rather than parsing this text, whose wording can change.
         team_id:
           type: [string, "null"]
           format: uuid
           description: |
             The team with the ball or at bat; in soccer and basketball, the team credited with the event, which
-            for a shot is the shooting team.
+            for a shot is the shooting team. In hockey, the team the provider credits: the shooting team for a
+            goal, shot on goal or miss, the blocking team for a blocked shot, the faceoff's winner and the
+            penalized team. In baseball, the team at bat.
         is_scoring: {type: boolean}
         points: {type: [integer, "null"], format: int32}
-        home_score: {type: [integer, "null"], format: int32, description: Score after the play.}
-        away_score: {type: [integer, "null"], format: int32, description: Score after the play.}
+        home_score:
+          type: [integer, "null"]
+          format: int32
+          description: Score after the play. A hockey shootout's attempts keep the tied score; the plays that end it add the winner's goal.
+        away_score:
+          type: [integer, "null"]
+          format: int32
+          description: Score after the play. A hockey shootout's attempts keep the tied score; the plays that end it add the winner's goal.
         is_official: {type: boolean}
         participants:
           type: array
@@ -1411,13 +1503,29 @@ components:
             - {$ref: "#/components/schemas/FootballPlay"}
             - {type: "null"}
         soccer:
+          description: Always sent, but left out of plays journaled before soccer shipped; treat a missing block as null.
           oneOf:
             - {$ref: "#/components/schemas/SoccerPlay"}
             - {type: "null"}
+          x-omitempty: false
         basketball:
+          description: Always sent, but left out of plays journaled before basketball shipped; treat a missing block as null.
           oneOf:
             - {$ref: "#/components/schemas/BasketballPlay"}
             - {type: "null"}
+          x-omitempty: false
+        hockey:
+          description: Always sent, but left out of plays journaled before hockey shipped; treat a missing block as null.
+          oneOf:
+            - {$ref: "#/components/schemas/HockeyPlay"}
+            - {type: "null"}
+          x-omitempty: false
+        baseball:
+          description: Always sent, but left out of plays journaled before baseball shipped; treat a missing block as null.
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballPlay"}
+            - {type: "null"}
+          x-omitempty: false
         version: {$ref: "#/components/schemas/Version"}
         updated_at: {type: string, format: date-time}
     Participant:
@@ -1429,6 +1537,14 @@ components:
         role: {type: string, examples: [passer]}
     FootballPlay:
       type: object
+      description: |
+        A football play. `air_yards` is set on completed NFL passes only. `play_action`, `screen_pass` and
+        `run_pass_option` are always null. Participant roles are passer, rusher, receiver, tackler, assist_tackler
+        (each player sharing a tackle), sacker, pass_defender (who broke up a pass), kicker, punter, returner,
+        holder, snapper, scorer (who scored the play's points, such as a touchdown or field goal), pat_scorer (who scored the try after a touchdown, such as
+        the extra-point kicker), pat_passer, pat_rusher, fumbler, fumble_forcer, recoverer (who recovered a
+        fumble), penalized (the penalized player) and player for any other part in the play. A player can have
+        several roles on one play. A player missing from the game's box score is left out of `participants`.
       required: [play_type, down, yards_to_go, start_yardline, end_yardline, yards_gained, is_first_down, is_touchdown, is_turnover, is_penalty, play_action, screen_pass, run_pass_option, air_yards, penalty_yards]
       properties:
         play_type: {$ref: "#/components/schemas/FootballPlayType"}
@@ -1441,10 +1557,25 @@ components:
         is_touchdown: {type: boolean}
         is_turnover: {type: boolean}
         is_penalty: {type: boolean}
-        play_action: {type: [boolean, "null"]}
-        screen_pass: {type: [boolean, "null"]}
-        run_pass_option: {type: [boolean, "null"]}
-        air_yards: {type: [integer, "null"], format: int32}
+        play_action:
+          type: [boolean, "null"]
+          deprecated: true
+          description: Always null. No provider reports it.
+        screen_pass:
+          type: [boolean, "null"]
+          deprecated: true
+          description: Always null. No provider reports it.
+        run_pass_option:
+          type: [boolean, "null"]
+          deprecated: true
+          description: Always null. No provider reports it.
+        air_yards:
+          type: [integer, "null"]
+          format: int32
+          description: |
+            How far past the line of scrimmage the receiver caught the ball, negative behind it: the play's pass
+            yards minus the yards after the catch. Null on incompletions, on every other play and in college
+            football, whose feed has no yards after the catch.
         penalty_yards:
           type: [integer, "null"]
           format: int32
@@ -1505,6 +1636,105 @@ components:
     BasketballShotType:
       type: string
       enum: [jump_shot, layup, dunk, hook_shot, tip_shot]
+    HockeyPlay:
+      type: object
+      description: |
+        A hockey event. `strength` is the manpower of the play's team when it happened. A shootout attempt is a
+        goal, shot on goal or missed shot with `is_shootout` set, and never scores. `penalty_minutes` and
+        `penalty_severity` are set on penalties only. Rink positions are in whole feet from center ice: x along
+        the rink between the end boards, -100 to 100, and y across it, -43 to 43, as the provider reports them.
+        Participant roles are scorer, assist, shooter, goalie (who faced a shot), blocker, faceoff_winner,
+        faceoff_loser, hitter, hittee, giver, taker, fouler (the penalized player) and fouled (who drew it).
+      required: [play_type, shot_type, strength, is_empty_net, is_shootout, penalty_minutes, penalty_severity, rink_x, rink_y]
+      properties:
+        play_type: {$ref: "#/components/schemas/HockeyPlayType"}
+        shot_type:
+          oneOf:
+            - {$ref: "#/components/schemas/HockeyShotType"}
+            - {type: "null"}
+        strength:
+          oneOf:
+            - {$ref: "#/components/schemas/HockeyStrength"}
+            - {type: "null"}
+        is_empty_net: {type: boolean, description: A goal scored into an empty net.}
+        is_shootout: {type: boolean}
+        penalty_minutes: {type: [integer, "null"], format: int32, minimum: 0, maximum: 20, examples: [2]}
+        penalty_severity:
+          oneOf:
+            - {$ref: "#/components/schemas/HockeyPenaltySeverity"}
+            - {type: "null"}
+        rink_x: {type: [integer, "null"], format: int32, minimum: -100, maximum: 100}
+        rink_y: {type: [integer, "null"], format: int32, minimum: -43, maximum: 43}
+    HockeyPlayType:
+      type: string
+      enum: [goal, shot_on_goal, missed_shot, blocked_shot, faceoff, hit, giveaway, takeaway, penalty, stoppage, period_start, period_end, game_end, other]
+    HockeyShotType:
+      type: string
+      enum: [wrist, snap, slap, backhand, tip_in, deflected, wrap_around, batted, poke, between_legs, cradle]
+    HockeyStrength:
+      type: string
+      enum: [even, power_play, shorthanded]
+    HockeyPenaltySeverity:
+      type: string
+      enum: [minor, double_minor, bench_minor, major, misconduct, game_misconduct, match]
+    BaseballPlay:
+      type: object
+      description: |
+        A baseball event. Every baseball play belongs to an at-bat, its `group_id`: the start and end of a half-inning
+        and the substitutions before an at-bat belong to the at-bat they precede or end. `pitch` is set on pitches
+        only. An at-bat's result is an `at_bat_result` play after the pitch it came on, and carries the runs it
+        scored. Participant roles are pitcher, batter, and on_first, on_second and on_third for the runners on base
+        after the play.
+      required: [play_type, pitch]
+      properties:
+        play_type: {$ref: "#/components/schemas/BaseballPlayType"}
+        pitch:
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballPitch"}
+            - {type: "null"}
+    BaseballPlayType:
+      type: string
+      enum: [inning_start, inning_end, at_bat_start, pitch, at_bat_result, stolen_base, caught_stealing, pickoff, wild_pitch, passed_ball, balk, defensive_indifference, error, substitution, other]
+    BaseballPitch:
+      type: object
+      description: |
+        One pitch. `pitch_number` is its place in the at-bat, from 1. `balls`, `strikes` and `outs` are the count and
+        outs it was thrown at. `outcome` is the call that stood, after any challenge; an automatic ball or strike was
+        awarded without a pitch, for a pitch-timer violation or an intentional walk, so it has no type or speed.
+        `speed` is the pitch's speed out of the hand in miles per hour, `batted_ball` the trajectory of a pitch put in
+        play, and `challenge` how a challenge of the call ended, null when nobody challenged it.
+      required: [pitch_number, pitch_type, outcome, balls, strikes, outs, speed, batted_ball, challenge]
+      properties:
+        pitch_number: {type: integer, format: int32, minimum: 1}
+        pitch_type:
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballPitchType"}
+            - {type: "null"}
+        outcome: {$ref: "#/components/schemas/BaseballPitchOutcome"}
+        balls: {type: integer, format: int32, minimum: 0, maximum: 3}
+        strikes: {type: integer, format: int32, minimum: 0, maximum: 2}
+        outs: {type: integer, format: int32, minimum: 0, maximum: 2}
+        speed: {type: [number, "null"], format: float, examples: [96]}
+        batted_ball:
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballBattedBall"}
+            - {type: "null"}
+        challenge:
+          oneOf:
+            - {$ref: "#/components/schemas/BaseballChallenge"}
+            - {type: "null"}
+    BaseballPitchType:
+      type: string
+      enum: [four_seam, fastball, sinker, cutter, slider, sweeper, slurve, curveball, knuckle_curve, slow_curve, changeup, splitter, forkball, screwball, knuckleball, eephus]
+    BaseballPitchOutcome:
+      type: string
+      enum: [ball, called_strike, swinging_strike, foul, foul_tip, foul_bunt, in_play, hit_by_pitch, automatic_ball, automatic_strike, other]
+    BaseballBattedBall:
+      type: string
+      enum: [ground_ball, line_drive, fly_ball, popup, bunt]
+    BaseballChallenge:
+      type: string
+      enum: [upheld, overturned]
     # ---------------------------------------------------------------- statistics
     StatLine:
       type: object
@@ -1752,5 +1982,5 @@ components:
         seq beyond the stream's head. `slow_consumer` the client fell too far behind and was
         dropped from a stream, so resume from `resume_from`. `too_many_subscriptions`.
         `unknown_stream`. `internal`. `unavailable`. `quota_exhausted` the account has used its
-        request allowance for the current period.
+        request allowance for the current period, which REST and streams share.
       enum: [bad_request, unauthorized, forbidden, not_found, rate_limited, resync_required, invalid_resume, slow_consumer, too_many_subscriptions, unknown_stream, internal, unavailable, quota_exhausted]

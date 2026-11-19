@@ -352,7 +352,7 @@ export type LiveState = {
     period_half: PeriodHalf | null;
     clock_seconds: number | null;
     /**
-     * Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football and basketball feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post.
+     * Whether the game clock is running, or null when the feed doesn't say. Soccer sets it: true while a half or a period of extra time is being played. Football, basketball and hockey feeds have no running flag, so it is null there; use clock_seconds, which updates as plays post. Baseball has no clock, so it is null.
      */
     clock_running: boolean | null;
     possession_team_id: string | null;
@@ -363,8 +363,22 @@ export type LiveState = {
      */
     last_play_id: string | null;
     football: FootballSituation | null;
-    soccer: SoccerSituation | null;
-    basketball: BasketballSituation | null;
+    /**
+     * Always sent, but left out of live states journaled before soccer shipped; treat a missing block as null.
+     */
+    soccer?: SoccerSituation | null;
+    /**
+     * Always sent, but left out of live states journaled before basketball shipped; treat a missing block as null.
+     */
+    basketball?: BasketballSituation | null;
+    /**
+     * Always sent, but left out of live states journaled before hockey shipped; treat a missing block as null.
+     */
+    hockey?: HockeySituation | null;
+    /**
+     * Always sent, but left out of live states journaled before baseball shipped; treat a missing block as null.
+     */
+    baseball?: BaseballSituation | null;
     version: Version;
     updated_at: string;
 };
@@ -442,6 +456,48 @@ export type BasketballSituation = {
     away_fouls: number | null;
 };
 
+/**
+ * The live hockey context. Periods 1-3 are regulation and 4 the overtime, 5 minutes in the regular season
+ * and 20 in the playoffs, where every later period is another 20-minute overtime. A regular-season game
+ * still tied after overtime goes to a shootout, period 5. Manpower is on each play as `strength`; there is
+ * no live power-play state.
+ *
+ */
+export type HockeySituation = {
+    /**
+     * Goals the home team scored in the shootout, null until one starts.
+     */
+    home_shootout: number | null;
+    /**
+     * Goals the away team scored in the shootout, null until one starts.
+     */
+    away_shootout: number | null;
+};
+
+/**
+ * The live baseball context: the count and outs of the at-bat in progress and the runners on base. Innings
+ * 1-9 are regulation and every later one is an extra inning. Between at-bats the count is 0-0; once a
+ * half-inning ends, `outs` is 3 and the bases are empty until the next half starts.
+ *
+ */
+export type BaseballSituation = {
+    balls: number;
+    strikes: number;
+    outs: number;
+    /**
+     * The runner on first base, or null when it is empty.
+     */
+    on_first: string | null;
+    /**
+     * The runner on second base, or null when it is empty.
+     */
+    on_second: string | null;
+    /**
+     * The runner on third base, or null when it is empty.
+     */
+    on_third: string | null;
+};
+
 export type PeriodScore = {
     team_id: string;
     period: number;
@@ -479,8 +535,17 @@ export type PlayGroup = {
      * The team with the ball or at bat.
      */
     team_id: string | null;
+    /**
+     * How the group ended, as the provider words it: a drive's result, or an at-bat's outcome (`Fly Out`),
+     * whose normalized form is the `baseball` block's `result`.
+     *
+     */
     result: string | null;
     football: FootballDrive | null;
+    /**
+     * Always sent, but left out of play groups journaled before baseball shipped; treat a missing block as null.
+     */
+    baseball?: BaseballAtBat | null;
     version: Version;
     updated_at: string;
 };
@@ -498,6 +563,31 @@ export type FootballDrive = {
 };
 
 /**
+ * One batter's plate appearance against one pitcher, the one on the mound when it ended. `outs_before` and
+ * `outs_after` are the outs in the half-inning when it started and ended, so outs made on the bases during it
+ * count too. `balls` and `strikes` are the count it ended at, or stands at while it lasts. `is_complete` is
+ * set once it is over, and `result` once the batter has one; an at-bat the half-inning ended first, as on a
+ * runner caught stealing for the third out, is complete with no result.
+ *
+ */
+export type BaseballAtBat = {
+    batter_id: string;
+    pitcher_id: string;
+    outs_before: number;
+    outs_after: number;
+    balls: number;
+    strikes: number;
+    /**
+     * Runs batted in.
+     */
+    rbi: number;
+    result: BaseballAtBatResult | null;
+    is_complete: boolean;
+};
+
+export type BaseballAtBatResult = 'single' | 'double' | 'triple' | 'home_run' | 'walk' | 'intentional_walk' | 'hit_by_pitch' | 'strikeout' | 'ground_out' | 'fly_out' | 'line_out' | 'pop_out' | 'foul_out' | 'sacrifice_fly' | 'sacrifice_bunt' | 'fielders_choice' | 'reached_on_error' | 'catcher_interference' | 'other';
+
+/**
  * One event in a game. `sequence` is the provider's total order within the game; two plays
  * can share it, so order by (`sequence`, `id`). Corrections bump `version`.
  *
@@ -513,32 +603,56 @@ export type Play = {
     wall_clock: string | null;
     /**
      * The play's type in its sport's vocabulary. Football uses the FootballPlayType values, soccer the
-     * SoccerPlayType values and basketball the BasketballPlayType values.
+     * SoccerPlayType values, basketball the BasketballPlayType values, hockey the HockeyPlayType values and
+     * baseball the BaseballPlayType values.
      *
      */
     type: string;
+    /**
+     * A one-line summary of the play. Football, basketball, hockey and baseball plays carry the
+     * provider's play text. Soccer descriptions are Statpad's own, written from the event's fields, such
+     * as `Goal: Alysson (Aston Villa), left foot, assisted by John McGinn. Manchester United 0, Aston Villa 1.`
+     * Read the structured fields rather than parsing this text, whose wording can change.
+     *
+     */
     description: string | null;
     /**
      * The team with the ball or at bat; in soccer and basketball, the team credited with the event, which
-     * for a shot is the shooting team.
+     * for a shot is the shooting team. In hockey, the team the provider credits: the shooting team for a
+     * goal, shot on goal or miss, the blocking team for a blocked shot, the faceoff's winner and the
+     * penalized team. In baseball, the team at bat.
      *
      */
     team_id: string | null;
     is_scoring: boolean;
     points: number | null;
     /**
-     * Score after the play.
+     * Score after the play. A hockey shootout's attempts keep the tied score; the plays that end it add the winner's goal.
      */
     home_score: number | null;
     /**
-     * Score after the play.
+     * Score after the play. A hockey shootout's attempts keep the tied score; the plays that end it add the winner's goal.
      */
     away_score: number | null;
     is_official: boolean;
     participants: Array<Participant>;
     football: FootballPlay | null;
-    soccer: SoccerPlay | null;
-    basketball: BasketballPlay | null;
+    /**
+     * Always sent, but left out of plays journaled before soccer shipped; treat a missing block as null.
+     */
+    soccer?: SoccerPlay | null;
+    /**
+     * Always sent, but left out of plays journaled before basketball shipped; treat a missing block as null.
+     */
+    basketball?: BasketballPlay | null;
+    /**
+     * Always sent, but left out of plays journaled before hockey shipped; treat a missing block as null.
+     */
+    hockey?: HockeyPlay | null;
+    /**
+     * Always sent, but left out of plays journaled before baseball shipped; treat a missing block as null.
+     */
+    baseball?: BaseballPlay | null;
     version: Version;
     updated_at: string;
 };
@@ -549,6 +663,16 @@ export type Participant = {
     role: string;
 };
 
+/**
+ * A football play. `air_yards` is set on completed NFL passes only. `play_action`, `screen_pass` and
+ * `run_pass_option` are always null. Participant roles are passer, rusher, receiver, tackler, assist_tackler
+ * (each player sharing a tackle), sacker, pass_defender (who broke up a pass), kicker, punter, returner,
+ * holder, snapper, scorer (who scored the play's points, such as a touchdown or field goal), pat_scorer (who scored the try after a touchdown, such as
+ * the extra-point kicker), pat_passer, pat_rusher, fumbler, fumble_forcer, recoverer (who recovered a
+ * fumble), penalized (the penalized player) and player for any other part in the play. A player can have
+ * several roles on one play. A player missing from the game's box score is left out of `participants`.
+ *
+ */
 export type FootballPlay = {
     play_type: FootballPlayType;
     down: number | null;
@@ -560,9 +684,30 @@ export type FootballPlay = {
     is_touchdown: boolean;
     is_turnover: boolean;
     is_penalty: boolean;
+    /**
+     * Always null. No provider reports it.
+     *
+     * @deprecated
+     */
     play_action: boolean | null;
+    /**
+     * Always null. No provider reports it.
+     *
+     * @deprecated
+     */
     screen_pass: boolean | null;
+    /**
+     * Always null. No provider reports it.
+     *
+     * @deprecated
+     */
     run_pass_option: boolean | null;
+    /**
+     * How far past the line of scrimmage the receiver caught the ball, negative behind it: the play's pass
+     * yards minus the yards after the catch. Null on incompletions, on every other play and in college
+     * football, whose feed has no yards after the catch.
+     *
+     */
     air_yards: number | null;
     /**
      * Net yards penalties moved the ball, for (+) or against (-) the offense, so that
@@ -634,6 +779,81 @@ export type BasketballPlay = {
 export type BasketballPlayType = 'field_goal' | 'free_throw' | 'offensive_rebound' | 'defensive_rebound' | 'rebound' | 'turnover' | 'steal' | 'block' | 'foul' | 'technical_foul' | 'flagrant_foul' | 'violation' | 'timeout' | 'substitution' | 'jump_ball' | 'review' | 'ejection' | 'period_start' | 'period_end' | 'game_end' | 'other';
 
 export type BasketballShotType = 'jump_shot' | 'layup' | 'dunk' | 'hook_shot' | 'tip_shot';
+
+/**
+ * A hockey event. `strength` is the manpower of the play's team when it happened. A shootout attempt is a
+ * goal, shot on goal or missed shot with `is_shootout` set, and never scores. `penalty_minutes` and
+ * `penalty_severity` are set on penalties only. Rink positions are in whole feet from center ice: x along
+ * the rink between the end boards, -100 to 100, and y across it, -43 to 43, as the provider reports them.
+ * Participant roles are scorer, assist, shooter, goalie (who faced a shot), blocker, faceoff_winner,
+ * faceoff_loser, hitter, hittee, giver, taker, fouler (the penalized player) and fouled (who drew it).
+ *
+ */
+export type HockeyPlay = {
+    play_type: HockeyPlayType;
+    shot_type: HockeyShotType | null;
+    strength: HockeyStrength | null;
+    /**
+     * A goal scored into an empty net.
+     */
+    is_empty_net: boolean;
+    is_shootout: boolean;
+    penalty_minutes: number | null;
+    penalty_severity: HockeyPenaltySeverity | null;
+    rink_x: number | null;
+    rink_y: number | null;
+};
+
+export type HockeyPlayType = 'goal' | 'shot_on_goal' | 'missed_shot' | 'blocked_shot' | 'faceoff' | 'hit' | 'giveaway' | 'takeaway' | 'penalty' | 'stoppage' | 'period_start' | 'period_end' | 'game_end' | 'other';
+
+export type HockeyShotType = 'wrist' | 'snap' | 'slap' | 'backhand' | 'tip_in' | 'deflected' | 'wrap_around' | 'batted' | 'poke' | 'between_legs' | 'cradle';
+
+export type HockeyStrength = 'even' | 'power_play' | 'shorthanded';
+
+export type HockeyPenaltySeverity = 'minor' | 'double_minor' | 'bench_minor' | 'major' | 'misconduct' | 'game_misconduct' | 'match';
+
+/**
+ * A baseball event. Every baseball play belongs to an at-bat, its `group_id`: the start and end of a half-inning
+ * and the substitutions before an at-bat belong to the at-bat they precede or end. `pitch` is set on pitches
+ * only. An at-bat's result is an `at_bat_result` play after the pitch it came on, and carries the runs it
+ * scored. Participant roles are pitcher, batter, and on_first, on_second and on_third for the runners on base
+ * after the play.
+ *
+ */
+export type BaseballPlay = {
+    play_type: BaseballPlayType;
+    pitch: BaseballPitch | null;
+};
+
+export type BaseballPlayType = 'inning_start' | 'inning_end' | 'at_bat_start' | 'pitch' | 'at_bat_result' | 'stolen_base' | 'caught_stealing' | 'pickoff' | 'wild_pitch' | 'passed_ball' | 'balk' | 'defensive_indifference' | 'error' | 'substitution' | 'other';
+
+/**
+ * One pitch. `pitch_number` is its place in the at-bat, from 1. `balls`, `strikes` and `outs` are the count and
+ * outs it was thrown at. `outcome` is the call that stood, after any challenge; an automatic ball or strike was
+ * awarded without a pitch, for a pitch-timer violation or an intentional walk, so it has no type or speed.
+ * `speed` is the pitch's speed out of the hand in miles per hour, `batted_ball` the trajectory of a pitch put in
+ * play, and `challenge` how a challenge of the call ended, null when nobody challenged it.
+ *
+ */
+export type BaseballPitch = {
+    pitch_number: number;
+    pitch_type: BaseballPitchType | null;
+    outcome: BaseballPitchOutcome;
+    balls: number;
+    strikes: number;
+    outs: number;
+    speed: number | null;
+    batted_ball: BaseballBattedBall | null;
+    challenge: BaseballChallenge | null;
+};
+
+export type BaseballPitchType = 'four_seam' | 'fastball' | 'sinker' | 'cutter' | 'slider' | 'sweeper' | 'slurve' | 'curveball' | 'knuckle_curve' | 'slow_curve' | 'changeup' | 'splitter' | 'forkball' | 'screwball' | 'knuckleball' | 'eephus';
+
+export type BaseballPitchOutcome = 'ball' | 'called_strike' | 'swinging_strike' | 'foul' | 'foul_tip' | 'foul_bunt' | 'in_play' | 'hit_by_pitch' | 'automatic_ball' | 'automatic_strike' | 'other';
+
+export type BaseballBattedBall = 'ground_ball' | 'line_drive' | 'fly_ball' | 'popup' | 'bunt';
+
+export type BaseballChallenge = 'upheld' | 'overturned';
 
 /**
  * Stat values keyed by stat code (`yards`, `att`, `td`). Values are numbers, except stats
@@ -858,7 +1078,7 @@ export type ChangedEntity = {
  * seq beyond the stream's head. `slow_consumer` the client fell too far behind and was
  * dropped from a stream, so resume from `resume_from`. `too_many_subscriptions`.
  * `unknown_stream`. `internal`. `unavailable`. `quota_exhausted` the account has used its
- * request allowance for the current period.
+ * request allowance for the current period, which REST and streams share.
  *
  */
 export type ErrorCode = 'bad_request' | 'unauthorized' | 'forbidden' | 'not_found' | 'rate_limited' | 'resync_required' | 'invalid_resume' | 'slow_consumer' | 'too_many_subscriptions' | 'unknown_stream' | 'internal' | 'unavailable' | 'quota_exhausted';
